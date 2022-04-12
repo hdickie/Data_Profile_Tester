@@ -21,42 +21,42 @@ Date and Gender are dimensions, and Count is a measure.
 
 ### Dataset Metadata
 <ol>
-<li>1. Column Names</li>
-<li>2. Data Type</li>
-<ol>
+<li>Column Names</li>
+<li>Data Type</li>
+</ol>
 
 ### Data Profile
 <ol>
-<li>3. Absolute File Row Count</li>
-<li>4. Absolute Column Cardinality</li>
-<li>5. Absolute Column Null Counts</li>
-<li>6. Absolute Dimension Cross Product Cardinality</li>
-<li>7. Absolute Dimension Cross Product Element Row Count</li>
-<li>8. Absolute Dimension Cross Product Element Measure Cardinality</li>
-<li>9. Absolute Dimension Cross Product Element Measure Null Count</li>
-<li>10. Relative File Row Count</li>
-<li>11. Relative Column Cardinality</li>
-<li>12. Relative Column Null Counts</li>
-<li>13. Relative Dimension Cross Product Cardinality</li>
-<li>14. Relative Dimension Cross Product Element Count</li>
-<li>15. Relative Dimension Cross Product Element Row Count</li>
-<li>16. Relative Dimension Cross Product Element Measure Cardinality</li>
-<li>17. Relative Dimension Cross Product Element Measure Null Count</li>
+<li>Absolute File Row Count</li>
+<li>Absolute Column Cardinality</li>
+<li>Absolute Column Null Counts</li>
+<li>Absolute Dimension Cross Product Cardinality</li>
+<li>Absolute Dimension Cross Product Element Row Count</li>
+<li>Absolute Dimension Cross Product Element Measure Cardinality</li>
+<li>Absolute Dimension Cross Product Element Measure Null Count</li>
+<li>Relative File Row Count</li>
+<li>Relative Column Cardinality</li>
+<li>Relative Column Null Counts</li>
+<li>Relative Dimension Cross Product Cardinality</li>
+<li>Relative Dimension Cross Product Element Count</li>
+<li>Relative Dimension Cross Product Element Row Count</li>
+<li>Relative Dimension Cross Product Element Measure Cardinality</li>
+<li>Relative Dimension Cross Product Element Measure Null Count</li>
 </ol>
 
 ### Cross Product Element Statistics
 <ol>
-<li>18. Absolute Dimension Cross Product Element Min</li>
-<li>19. Absolute Dimension Cross Product Element Max</li>
-<li>20. Absolute Dimension Cross Product Element Sum</li>
-<li>21. Absolute Dimension Cross Product Element Mean</li>
-<li>22. Absolute Dimension Cross Product Element Median</li>
-<li>23. Absolute Dimension Cross Product Element Mode</li>
-<li>24. Relative Dimension Cross Product Element Min</li>
-<li>25. Relative Dimension Cross Product Element Max</li>
-<li>26. Relative Dimension Cross Product Element Sum</li>
-<li>27. Relative Dimension Cross Product Element Mean</li>
-<li>28. Relative Dimension Cross Product Element Median</li>
+<li>Absolute Dimension Cross Product Element Min</li>
+<li>Absolute Dimension Cross Product Element Max</li>
+<li>Absolute Dimension Cross Product Element Sum</li>
+<li>Absolute Dimension Cross Product Element Mean</li>
+<li>Absolute Dimension Cross Product Element Median</li>
+<li>Absolute Dimension Cross Product Element Mode</li>
+<li>Relative Dimension Cross Product Element Min</li>
+<li>Relative Dimension Cross Product Element Max</li>
+<li>Relative Dimension Cross Product Element Sum</li>
+<li>Relative Dimension Cross Product Element Mean</li>
+<li>Relative Dimension Cross Product Element Median</li>
 </ol>
 
 ### Data Intersection
@@ -67,5 +67,10 @@ Date and Gender are dimensions, and Count is a measure.
 </ol>
 
 
+##Project Status
+
+### Test Results
+
+### Test Coverage
 <a href="https://hdickie.github.io/Data_Profile_Tester/htmlcov/index.html">Test Coverage Report</a>
 
