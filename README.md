@@ -2,13 +2,13 @@
 This project is a python module that can be used to define tests for data sets. This is part of a larger project to bring all my personal data into governed data pipelines. Automating these sort of tests has a huge potential to save time and accelerate development.
 
 ## Background
-In my roles as Data Analyst and System Analyst, I have had to analyze many datasets and I found that it is possible to break up the questions we ask about datasets into a handful of cases.
-
-Quickly reviewing some terms from set theory:
-Cardinality: The count of unique items in a set
-Cross Product: Every unique combination of elements from two or more columns.
-Dimension: One value used to categorize obersvations.
-Measure:  One value that is an element of an observation.
+In my roles as Data Analyst and System Analyst, I have had to analyze many datasets and I found that it is possible to break up the questions we ask about datasets into a handful of cases.  
+  
+Quickly reviewing some terms from set theory:  
+Cardinality: The count of unique items in a set  
+Cross Product: Every unique combination of elements from two or more columns.  
+Dimension: One value used to categorize obersvations.  
+Measure:  One value that is an element of an observation.  
   
 For example:  
 Date		Gender	Count  
