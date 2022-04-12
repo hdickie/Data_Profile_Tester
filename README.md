@@ -103,7 +103,7 @@ I am the sole stakeholder here, so I define the business requirements.
 <ol>
 <li>WizTree data collection is automated.</li>
 <li>WizTree data is aggregated for analysis.</li>
-<li>Business User backup and deletion suppression lists are saved to file.<li>
+<li>Business User backup and deletion suppression lists are saved to file.</li>
 <li>Suppressions to backup and deletion recommendations can be applied.</li>
 <li>A delta between two disk usage repors can be computed.</li>
 <li>Notifications are written to file.</li>
@@ -351,30 +351,30 @@ The first step in implementing this automatic analysis is to define the data mod
   
 #### Method Signatures  
   
-def get_subset_of_disk_usage_report(path_to_disk_usage_report, subset_root_path):
-	"""
-	Returns a DataFrame of filtered raw Wiztee data.
-	"""
-	
-	return DataFrame (Raw WizTree Data Layout)
+def get_subset_of_disk_usage_report(path_to_disk_usage_report, subset_root_path):  
+	"""  
+	Returns a DataFrame of filtered raw Wiztee data.  
+	"""  
+	  
+	return DataFrame (Raw WizTree Data Layout)  
   
-def compute_disk_usage_delta(path_to_disk_usage_report_1,path_to_disk_usage_report_path_2):
-	"""
-	Returns a DataFrame of added, removed and modifie files between the two reports. Returned layout is "Disk Usage Delta" layout.
-	"""
-	return DataFrame (Disk Usage Delta Layout)
+def compute_disk_usage_delta(path_to_disk_usage_report_1,path_to_disk_usage_report_path_2):  
+	"""  
+	Returns a DataFrame of added, removed and modifie files between the two reports. Returned layout is "Disk Usage Delta" layout.  
+	"""  
+	return DataFrame (Disk Usage Delta Layout)  
   
-def identify_delete_prospect_paths(DataFrame (Disk Usage Delta Layout),path_to_delete_suppression_list):
-	"""
-	Returns a DataFrame of strings that meet delete prospect criteria.
-	"""
-	return DataFrame (Delete Path Suggestions Layout)
+def identify_delete_prospect_paths(DataFrame (Disk Usage Delta Layout),path_to_delete_suppression_list):  
+	"""  
+	Returns a DataFrame of strings that meet delete prospect criteria.  
+	"""  
+	return DataFrame (Delete Path Suggestions Layout)  
 	
-def identify_backup_prospect_paths(DataFrame (Disk Usage Delta Layout),path_to_backup_suppression_list):
-	"""
-	Returns a DataFrame of strings that meet backup prospect criteria.
-	"""
-	return DataFrame (Backup Path Suggestions Layout)
+def identify_backup_prospect_paths(DataFrame (Disk Usage Delta Layout),path_to_backup_suppression_list):  
+	"""  
+	Returns a DataFrame of strings that meet backup prospect criteria.  
+	"""  
+	return DataFrame (Backup Path Suggestions Layout)  
   
   
   
