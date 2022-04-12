@@ -9,14 +9,14 @@ Cardinality: The count of unique items in a set
 Cross Product: Every unique combination of elements from two or more columns.
 Dimension: One value used to categorize obersvations.
 Measure:  One value that is an element of an observation.
-
-For example:
-Date		Gender	Count
-2000-01-01	M		1
-2000-01-01	F		2
-2000-01-02	M		3
-2000-01-02	F		4
-
+  
+For example:  
+Date		Gender	Count  
+2000-01-01	M		1  
+2000-01-01	F		2  
+2000-01-02	M		3  
+2000-01-02	F		4  
+  
 Date and Gender are dimensions, and Count is a measure.
 
 #### Dataset Metadata
@@ -24,7 +24,7 @@ Date and Gender are dimensions, and Count is a measure.
 <li>Column Names</li>
 <li>Data Type</li>
 </ol>
-
+  
 #### Data Profile
 <ol>
 <li>Absolute File Row Count</li>
@@ -43,7 +43,7 @@ Date and Gender are dimensions, and Count is a measure.
 <li>Relative Dimension Cross Product Element Measure Cardinality</li>
 <li>Relative Dimension Cross Product Element Measure Null Count</li>
 </ol>
-
+  
 #### Cross Product Element Statistics
 <ol>
 <li>Absolute Dimension Cross Product Element Min</li>
@@ -58,41 +58,161 @@ Date and Gender are dimensions, and Count is a measure.
 <li>Relative Dimension Cross Product Element Mean</li>
 <li>Relative Dimension Cross Product Element Median</li>
 </ol>
-
+  
 #### Data Intersection
 <ol>
 <li>Mutual Exclusivity</li>
 <li>Complete Overlap</li>
 <li>Bounded Overlap</li>
 </ol>
-
+  
 ### Example Use Case: Monitoring Disk Usage
-WizTree is a free program that will analyze disk usage and allow the computed summary statistics to be visualized in a TreeMap, as well as output in a tabular form with these headers:  
+WizTree is a free program that will analyze disk usage and allow the computed summary statistics to be visualized in a TreeMap, as well as output in a tabular form.
+  
+  
+### About the Data
+  
+WizTree Disk Usage report data has these headers:  
 File Name, Size, Allocated, Modified, Attributes,Files, Folders
-
-I've used Windows Task Scheduler to automate the recording of this data every day. In a professional context. business cases for data are defined. I do that here for my personal use:
-#### Business Cases for WizTree data
+  
+I've used Windows Task Scheduler to automate the recording of this data every day.
+  
+#### Business Objectives for Automatic Analysis of WizTree data
 <ol>
-<li>Identify wasted space</li>
-<li>Identify directories that grow over time</li>
-<li>Identify memory usage footprint of code that writes output to file</li>
-<li>When external backup memory devices are connected, propspects for backup or archival can be identified</li>
+<li>Business Users will be able to provide a list of directory to exclude from disk usage analysis.</li>
+<li>Business Users will be able to provide a list of directories to consider for backup.</li>
+<li>Business Users will be able to provide a directory as the current backup to help identify backup suggestions.</li>
+<li>Business Users will be able to compare two disk usage reports and identify: files added, files removed, memory deltas. </li>
+<li>Business Users will be able to analyze a folder a receive suggestions for file to delete. </li>
+<li>Business Users will be able to analyze a folder a receive suggestions for file to backup. </li>
+<li>Business Users will be able to access new reports from an output directory. No email notifications will be sent.</li>
+<li>Business Users will be able action on delete and backup recommendations with one script each.</li>
 </ol>
-
+  
 #### Business Requirements for Automatic Analysis of WizTree data
+I am the sole stakeholder here, so I define the business requirements.
 <ol>
-<li>WizTree Data Collection is Automated</li>
-<li>WizTree Data is aggregated for analysis</li>
-<li>Wasted Space: files to ignore are identified</li>
-<li>Wasted Space: conditions for alerts are defined</li>
+<li>Backup: Directory Paths can be added to ignore list</li>
+<li>Backup: If a directory is on the ignore list, do not include it in any backup recommendations.</li>
+<li>Backup: If a file is on the backup list and has a different size that the provided backup location, suggest the file for backup.</li>
+<li>Wasted Space: If a directory is on the ignore list, do not include it in any delete recommendations.</li>
+<li>Wasted Space: If a directory has more than 0.25 GB of memory that is not on the ignore list, and is not on the backup list, suggest qualifying files in that folder for deletion.</li>
 </ol>
+  
+#### Technical Objectives for Automatic Analysis of WizTree data
+<ol>
+<li>WizTree data collection is automated.</li>
+<li>WizTree data is aggregated for analysis.</li>
+<li>Business User backup and deletion suppression lists are saved to file.<li>
+<li>Suppressions to backup and deletion recommendations can be applied.</li>
+<li>A delta between two disk usage repors can be computed.</li>
+<li>Notifications are written to file.</li>
+<li>A script executing deletion recommendations is output to file.</li>
+<li>A script executing backup recommendations is output to file.</li>
+</ol>
+  
+#### Technical Requirements for Automatic Analysis of WizTree data  
+<ol>
+<li>Wiztree disk usage report is output to C:/sandbox/data/raw/wiztree/wiztree__YYYYMMDD_HHMM.dat every day at 7pm.</li>
+<li>Business User backup suppressions are stored at this location: C:/sandbox/data/input/wiztree/suppressed_backup_paths.dat</li>
+<li>Business User delete suppressions are stored at this location: C:/sandbox/data/input/wiztree/suppressed_delete_paths.dat</li>
+<li>Disk usage delta reports are stored at this location: C:/sandbox/data/output/wiztree/disk_usage_delta_report_YYYYMMDD__HHMM__YYYYMMDD__HHMM.dat</li>
+<li>Delete recommendation reports are stored at this location: C:/sandbox/data/output/wiztree/delete_recommendation_report_YYYYMMDD__HHMM.dat</li>
+<li>Backup recommendation reports are stored at this location: C:/sandbox/data/output/wiztree/backup_recommendation_report_YYYYMMDD__HHMM.dat</li>
+<li>Delete execution scripts are stored at this location: C:/sandbox/data/output/wiztree/execute_delete_recommendations_YYYYMMDD__HHMM.cmd</li>
+<li>Backup execution scripts are stored at this location: C:/sandbox/data/output/wiztree/execute_backup_recommendations_YYYYMMDD__HHMM.cmd</li>
+</ol>
+  
+#### Example Business Cases for WizTree data
 
+Compute Disk Usage Delta
+<ol>
+<li>Disk Usage Report 1: C:/sandbox/data/raw/wiztree/wiztree__20220328_0801.dat</li>
+<li>Disk Usage Report 2: C:/sandbox/data/raw/wiztree/wiztree__20220401_0524.dat</li>
+<li>Expected Output: C:/sandbox/data/output/wiztree/disk_usage_delta_report_20220328_0801__20220401_0524.dat</li>
+</ol>
+  
+Identify Deletion Prospects
+<ol>
+<li>Target Directory: C:/</li>
+<li>Supression list: C:/sandbox/data/input/wiztree/suppressed_delete_paths.dat</li>
+<li>Expected Output: C:/sandbox/data/output/wiztree/delete_recommendation_report_YYYYMMDD__HHMM.dat</li>
+<li>Deletion Script: C:/sandbox/data/output/wiztree/execute_delete_recommendations_YYYYMMDD__HHMM.cmd</li>
+</ol>
+  
+Identify Backup Prospects
+<ol>
+<li>Target Directory: C:/</li>
+<li>Backup directory: C:/backup</li>
+<li>Supression list: C:/sandbox/data/input/wiztree/suppressed_backup_paths.dat</li>
+<li>Expected Output: C:/sandbox/data/output/wiztree/backup_recommendation_report_YYYYMMDD__HHMM.dat</li>
+<li>Backup Script: C:/sandbox/data/output/wiztree/execute_backup_recommendations_YYYYMMDD__HHMM.cmd</li>
+</ol>
+  
+  
+  
+#### Testing Plan
+  
+The first step in implementing this automatic analysis is to define the data model we want to use, and the necessary transformations from the raw data.
+  
+<table>
+<thead>
+	<tr>
+		<th colspan="2">Raw WizTree data</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td>Column Name</td>
+		<td>Data Type</td>
+	</tr>
+	<tr>
+		<td>File Name</td>
+		<td>String</td>
+	</tr>
+	<tr>
+		<td>Size</td>
+		<td>Integer</td>
+	</tr>
+	<tr>
+		<td>Allocated</td>
+		<td>Integer</td>
+	</tr>
+	<tr>
+		<td>Modified</td>
+		<td>Timestamp</td>
+	</tr>
+	<tr>
+		<td>Attributes</td>
+		<td>Integer</td>
+	</tr>
+	<tr>
+		<td>Files</td>
+		<td>Integer</td>
+	</tr>
+	<tr>
+		<td>Folders</td>
+		<td>Integer</td>
+	</tr>
+</tbody>
+</table>
+
+  
+#### Comments on Orchestration
+SchTasks leaves much to be desired. I have used Prefect for this and other projects.
+TODO say more
+  
+#### Testing Cases
+  
+#### {Potential Next Steps
+Enhance granularity of analysis by inspeting fiel attributes.
+  
 #### Project Status
 This project is currently in development. 
-
+  
 #### Test Results
 <a href="https://hdickie.github.io/Data_Profile_Tester/pages/test_results.html">Test Result Report</a>
-
+  
 #### Test Coverage
 <a href="https://hdickie.github.io/Data_Profile_Tester/htmlcov/index.html">Test Coverage Report</a>
-
+  
