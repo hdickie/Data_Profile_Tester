@@ -151,9 +151,9 @@ Identify Backup Prospects
   
   
   
-#### Testing Plan
+#### Data Model
   
-The first step in implementing this automatic analysis is to define the data model we want to use, and the necessary transformations from the raw data.
+The first step in implementing this automatic analysis is to define the data model we want to use, and the necessary transformations from the raw data.  
   
 <table>
 <thead>
@@ -196,23 +196,203 @@ The first step in implementing this automatic analysis is to define the data mod
 	</tr>
 </tbody>
 </table>
-
+  
+<table>
+<thead>
+	<tr>
+		<th colspan="2">Disk Usage Delta</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td>Column Name</td>
+		<td>Data Type</td>
+	</tr>
+	<tr>
+		<td>File Path</td>
+		<td>String</td>
+	</tr>
+	<tr>
+		<td>Detected Change</td>
+		<td>String</td>
+	</tr>
+	<tr>
+		<td>Modified Timestamp Delta</td>
+		<td>Timestamp</td>
+	</tr>
+	<tr>
+		<td>Size Delta</td>
+		<td>Integer</td>
+	</tr>
+</tbody>
+</table>
+  
+<table>
+<thead>
+	<tr>
+		<th colspan="2">Backup Path Suppressions</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td>Column Name</td>
+		<td>Data Type</td>
+	</tr>
+	<tr>
+		<td>File Path</td>
+		<td>String</td>
+	</tr>
+</tbody>
+</table>
+  
+<table>
+<thead>
+	<tr>
+		<th colspan="2">Delete Path Suppressions</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td>Column Name</td>
+		<td>Data Type</td>
+	</tr>
+	<tr>
+		<td>File Path</td>
+		<td>String</td>
+	</tr>
+</tbody>
+</table>
+  
+<table>
+<thead>
+	<tr>
+		<th colspan="2">Delete Path Suggestions</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td>Column Name</td>
+		<td>Data Type</td>
+	</tr>
+	<tr>
+		<td>File Path</td>
+		<td>String</td>
+	</tr>
+	<tr>
+		<td>Created Timestamp</td>
+		<td>Timestamp</td>
+	</tr>
+	<tr>
+		<td>Modified Timestamp</td>
+		<td>Timestamp</td>
+	</tr>
+	<tr>
+		<td>Size</td>
+		<td>Integer</td>
+	</tr>
+</tbody>
+</table>
+  
+  
+<table>
+<thead>
+	<tr>
+		<th colspan="2">Backup Path Suggestions</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td>Column Name</td>
+		<td>Data Type</td>
+	</tr>
+	<tr>
+		<td>File Path</td>
+		<td>String</td>
+	</tr>
+	<tr>
+		<td>Created Timestamp</td>
+		<td>Timestamp</td>
+	</tr>
+	<tr>
+		<td>Modified Timestamp</td>
+		<td>Timestamp</td>
+	</tr>
+	<tr>
+		<td>Size</td>
+		<td>Integer</td>
+	</tr>
+	<tr>
+		<td>Backup File Path</td>
+		<td>String</td>
+	</tr>
+	<tr>
+		<td>Backup Created Timestamp</td>
+		<td>Timestamp</td>
+	</tr>
+	<tr>
+		<td>Backup Modified Timestamp</td>
+		<td>Timestamp</td>
+	</tr>
+	<tr>
+		<td>Backup Size</td>
+		<td>Integer</td>
+	</tr>
+	<tr>
+		<td>Backup Time Delta</td>
+		<td>Timestamp</td>
+	</tr>
+	<tr>
+		<td>Backup Size Delta</td>
+		<td>Integer</td>
+	</tr>
+</tbody>
+</table>
+  
+  
+#### Method Signatures  
+  
+def get_subset_of_disk_usage_report(path_to_disk_usage_report, subset_root_path):
+	"""
+	Returns a DataFrame of filtered raw Wiztee data.
+	"""
+	
+	return DataFrame (Raw WizTree Data Layout)
+  
+def compute_disk_usage_delta(path_to_disk_usage_report_1,path_to_disk_usage_report_path_2):
+	"""
+	Returns a DataFrame of added, removed and modifie files between the two reports. Returned layout is "Disk Usage Delta" layout.
+	"""
+	return DataFrame (Disk Usage Delta Layout)
+  
+def identify_delete_prospect_paths(DataFrame (Disk Usage Delta Layout),path_to_delete_suppression_list):
+	"""
+	Returns a DataFrame of strings that meet delete prospect criteria.
+	"""
+	return DataFrame (Delete Path Suggestions Layout)
+	
+def identify_backup_prospect_paths(DataFrame (Disk Usage Delta Layout),path_to_backup_suppression_list):
+	"""
+	Returns a DataFrame of strings that meet backup prospect criteria.
+	"""
+	return DataFrame (Backup Path Suggestions Layout)
+  
+  
   
 #### Comments on Orchestration
-SchTasks leaves much to be desired. I have used Prefect for this and other projects.
-TODO say more
+SchTasks leaves much to be desired. I have used Prefect for this and other projects.  
+TODO say more  
   
-#### Testing Cases
+#### Test Cases  
   
-#### {Potential Next Steps
+#### {Potential Next Steps  
 Enhance granularity of analysis by inspeting fiel attributes.
   
-#### Project Status
-This project is currently in development. 
+#### Project Status  
+This project is currently in development.   
   
-#### Test Results
-<a href="https://hdickie.github.io/Data_Profile_Tester/pages/test_results.html">Test Result Report</a>
+#### Test Results  
+TODO <a href="https://hdickie.github.io/Data_Profile_Tester/pages/test_results.html">Test Result Report</a>  
   
-#### Test Coverage
+#### Test Coverage  
 <a href="https://hdickie.github.io/Data_Profile_Tester/htmlcov/index.html">Test Coverage Report</a>
   
