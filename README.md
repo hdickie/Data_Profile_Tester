@@ -61,15 +61,16 @@ Date and Gender are dimensions, and Count is a measure.
 
 ### Data Intersection
 <ol>
-<li>29. Mutual Exclusivity<li>
-<li>30. Complete Overlap<li>
-<li>31. Bounded Overlap<li>
+<li>Mutual Exclusivity</li>
+<li>Complete Overlap</li>
+<li>Bounded Overlap</li>
 </ol>
 
 
 ##Project Status
 
 ### Test Results
+
 
 ### Test Coverage
 <a href="https://hdickie.github.io/Data_Profile_Tester/htmlcov/index.html">Test Coverage Report</a>
