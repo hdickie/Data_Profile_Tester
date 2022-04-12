@@ -1,7 +1,7 @@
+## Motivation
+This project is a python module that can be used to define tests for data sets. This is part of a larger project to bring all my personal data into governed data pipelines. Automating these sort of tests has a huge potential to save time and accelerate development.
+
 ## Background
-
-This project is a python module that can be used to define tests for data sets.  
-
 In my roles as Data Analyst and System Analyst, I have had to analyze many datasets and I found that it is possible to break up the questions we ask about datasets into a handful of cases.
 
 Quickly reviewing some terms from set theory:
@@ -19,13 +19,13 @@ Date		Gender	Count
 
 Date and Gender are dimensions, and Count is a measure.
 
-### Dataset Metadata
+#### Dataset Metadata
 <ol>
 <li>Column Names</li>
 <li>Data Type</li>
 </ol>
 
-### Data Profile
+#### Data Profile
 <ol>
 <li>Absolute File Row Count</li>
 <li>Absolute Column Cardinality</li>
@@ -44,7 +44,7 @@ Date and Gender are dimensions, and Count is a measure.
 <li>Relative Dimension Cross Product Element Measure Null Count</li>
 </ol>
 
-### Cross Product Element Statistics
+#### Cross Product Element Statistics
 <ol>
 <li>Absolute Dimension Cross Product Element Min</li>
 <li>Absolute Dimension Cross Product Element Max</li>
@@ -59,19 +59,40 @@ Date and Gender are dimensions, and Count is a measure.
 <li>Relative Dimension Cross Product Element Median</li>
 </ol>
 
-### Data Intersection
+#### Data Intersection
 <ol>
 <li>Mutual Exclusivity</li>
 <li>Complete Overlap</li>
 <li>Bounded Overlap</li>
 </ol>
 
+### Example Use Case: Monitoring Disk Usage
+WizTree is a free program that will analyze disk usage and allow the computed summary statistics to be visualized in a TreeMap, as well as output in a tabular form with these headers:  
+File Name, Size, Allocated, Modified, Attributes,Files, Folders
 
-##Project Status
+I've used Windows Task Scheduler to automate the recording of this data every day. In a professional context. business cases for data are defined. I do that here for my personal use:
+#### Business Cases for WizTree data
+<ol>
+<li>Identify wasted space</li>
+<li>Identify directories that grow over time</li>
+<li>Identify memory usage footprint of code that writes output to file</li>
+<li>When external backup memory devices are connected, propspects for backup or archival can be identified</li>
+</ol>
 
-### Test Results
+#### Business Requirements for Automatic Analysis of WizTree data
+<ol>
+<li>WizTree Data Collection is Automated</li>
+<li>WizTree Data is aggregated for analysis</li>
+<li>Wasted Space: files to ignore are identified</li>
+<li>Wasted Space: conditions for alerts are defined</li>
+</ol>
 
+#### Project Status
+This project is currently in development. 
 
-### Test Coverage
+#### Test Results
+<a href="https://hdickie.github.io/Data_Profile_Tester/pages/test_results.html">Test Result Report</a>
+
+#### Test Coverage
 <a href="https://hdickie.github.io/Data_Profile_Tester/htmlcov/index.html">Test Coverage Report</a>
 
