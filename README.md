@@ -383,12 +383,14 @@ SchTasks leaves much to be desired. I have used Prefect for this and other proje
 TODO say more  
   
 #### Test Cases  
+We proceed with out testing plan by using user-generated test data sets, for which we define the expected output.
+TODO define test data sets
   
-#### {Potential Next Steps  
-Enhance granularity of analysis by inspeting fiel attributes.
+#### Potential Next Steps  
+Enhance granularity of analysis by inspecting file attributes.
   
 #### Project Status  
-This project is currently in development.   
+This project is currently in development.  
   
 #### Test Results  
 TODO <a href="https://hdickie.github.io/Data_Profile_Tester/pages/test_results.html">Test Result Report</a>  
