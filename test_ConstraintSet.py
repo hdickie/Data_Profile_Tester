@@ -92,7 +92,7 @@ class TestConstraintSet(TestCase):
     def execute_test_using_list_of_tuples(self,fail_tuples,success_tuples):
         global stack_depth
         global print_logs
-        debug("ENTER test_absolute_file_row_count()")
+        debug("ENTER execute_test_using_list_of_tuples()")
         stack_depth += 1
         relevant_test_tuples__expect_success = success_tuples
         relevant_test_tuples__expect_fail = fail_tuples
@@ -138,7 +138,7 @@ class TestConstraintSet(TestCase):
             try:
                 test_result = current_constraint_set.checkConstraintById(current_tuple[1])
                 stack_depth -= 1
-                self.assertEqual(test_result, 1)
+                self.assertEqual(test_result, 0)
                 error("### Passed test " + str(current_tuple))
             except Exception as e:
                 fail_flag += 1
@@ -157,6 +157,7 @@ class TestConstraintSet(TestCase):
 
         stack_depth -= 1
         self.assertEqual(fail_flag, 0)
+        debug("EXIT execute_test_using_list_of_tuples()")
 
 
     def test_absolute_file_row_count(self):
@@ -169,6 +170,15 @@ class TestConstraintSet(TestCase):
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
 
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
+        debug("test_type_tuples:" + str(test_type_tuples))
+        for t in test_type_tuples:
+            debug("    "+self.test_set_definitions[t[0]].constraint_id_to_args_dict_map[t[1]]['args']['constraint_name'])
+        debug("len(all_fail_tuples):" + str(all_fail_tuples))
+        debug("len(all_success_tuples):" + str(all_success_tuples))
+        debug("fail_tuples:" + str(fail_tuples))
+        debug("success_tuples:" + str(success_tuples))
+
         info("There are "+str(len(fail_tuples)+len(success_tuples))+" subtests.")
         self.execute_test_using_list_of_tuples(fail_tuples,success_tuples)
         info("FINISHED TEST: test_absolute_file_row_count")
@@ -179,6 +189,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Column Cardinality']
+        debug("len(test_type_tuples):"+str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -193,6 +204,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Column Null Count']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -207,6 +219,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Dimension Cross Product Cardinality']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -221,6 +234,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Dimension Cross Product Element Row Count']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -235,6 +249,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Dimension Cross Product Element Measure Cardinality']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -249,6 +264,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Dimension Cross Product Element Measure Null Count']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -263,6 +279,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Dimension Cross Product Element Measure Min']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -277,6 +294,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Dimension Cross Product Element Measure Mean']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -291,6 +309,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Dimension Cross Product Element Measure Median']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -305,6 +324,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Dimension Cross Product Element Measure Mode']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -319,6 +339,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Dimension Cross Product Element Measure Max']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -333,6 +354,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Column Data Type']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -347,6 +369,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Layout']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -361,6 +384,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Column Name']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -375,6 +399,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Header']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -389,6 +414,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative File Row Count']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -403,6 +429,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Column Cardinality']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -417,6 +444,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Column Null Count']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -431,6 +459,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Dimension Cross Product Cardinality']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -445,6 +474,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Dimension Cross Product Element Row Count']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -459,6 +489,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Dimension Cross Product Element Measure Cardinality']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -473,6 +504,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Dimension Cross Product Element Measure Null Count']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -487,6 +519,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Dimension Cross Product Element Measure Min']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -501,6 +534,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Dimension Cross Product Element Measure Mean']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -515,6 +549,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Dimension Cross Product Element Measure Median']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -529,6 +564,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Dimension Cross Product Element Measure Mode']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -543,6 +579,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Dimension Cross Product Element Measure Max']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -557,6 +594,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Column Data Type']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -571,6 +609,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Layout']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -585,6 +624,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Column Name']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -599,6 +639,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Column Header']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -613,6 +654,7 @@ class TestConstraintSet(TestCase):
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
         test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Bounded Overlap']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
         success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
@@ -620,10 +662,6 @@ class TestConstraintSet(TestCase):
         info("There are " + str(len(fail_tuples) + len(success_tuples)) + " subtests.")
         self.execute_test_using_list_of_tuples(fail_tuples, success_tuples)
         info("FINISHED TEST: test_bounded_overlap")
-
-
-
-
 
 if __name__ == "__main__":
     unittest.main()

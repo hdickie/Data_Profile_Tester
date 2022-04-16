@@ -6,7 +6,7 @@ import datetime
 import statistics
 
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 logging.basicConfig(format='%(asctime)s ' + 'ConstraintSet' + ' %(levelname)s| %(message)s')
 
 global stack_depth
@@ -47,7 +47,7 @@ def create_test_constraint_sets_map_from_xlsx(xlsx_path):
     global stack_depth
     global print_logs
 
-    print_logs = False
+    print_logs = True
 
     debug("ENTER create_test_constraint_sets_map_from_xlsx()")
     stack_depth += 1
@@ -57,7 +57,7 @@ def create_test_constraint_sets_map_from_xlsx(xlsx_path):
 
     # Constraint_Set_Name	Constraint_Set_Id	Constraint_Name	constraint_type	Dimension_Index_List	Element	lower_bound	upper_bound	Warn_or_Fail
     constraint_def_df = pd.read_excel(xlsx_path, sheet_name="Constraint Definitions")
-    debug("constraint_def_df:\n"+constraint_def_df.to_string())
+    #debug("constraint_def_df:\n"+constraint_def_df.to_string())
 
     # Data Set Name	Description	Data Set Path
     data_set_def_df = pd.read_excel(xlsx_path, sheet_name="Data Set Definitions")
@@ -76,10 +76,10 @@ def create_test_constraint_sets_map_from_xlsx(xlsx_path):
         Primary_Data_Set_Name = constraint_set_def_df.iloc[i, 2]
         Secondary_Data_Set_Name = constraint_set_def_df.iloc[i, 3]
 
-        debug("Constraint_Set_Name:"+Constraint_Set_Name)
-        debug("Constraint_Set_Id:" + str(Constraint_Set_Id))
-        debug("Primary_Data_Set_Name:" + Primary_Data_Set_Name)
-        debug("Secondary_Data_Set_Name:" + Secondary_Data_Set_Name)
+        #debug("Constraint_Set_Name:"+Constraint_Set_Name)
+        #debug("Constraint_Set_Id:" + str(Constraint_Set_Id))
+        #debug("Primary_Data_Set_Name:" + Primary_Data_Set_Name)
+        #debug("Secondary_Data_Set_Name:" + Secondary_Data_Set_Name)
 
         if Secondary_Data_Set_Name == 'None':
             constraint_set_id_to_Constraint_Set_Object_map[Constraint_Set_Id] = ConstraintSet(Constraint_Set_Name,
@@ -108,13 +108,11 @@ def create_test_constraint_sets_map_from_xlsx(xlsx_path):
         upper_bound = constraint_def_df.iloc[i, 9]
         Warn_or_Fail = constraint_def_df.iloc[i, 10]
 
-        debug('Constraint_Set_Id:'+str(Constraint_Set_Id))
-        debug("Constraint_Set_Name:"+str(Constraint_Set_Name))
-        debug("constraint_def_df:\n"+str(constraint_def_df.to_string()))
+        #debug('Constraint_Set_Id:'+str(Constraint_Set_Id))
+        #debug("Constraint_Set_Name:"+str(Constraint_Set_Name))
+        #debug("constraint_def_df:\n"+str(constraint_def_df.to_string()))
 
         try:
-            debug(constraint_set_id_to_Constraint_Set_Object_map)
-            debug(Constraint_Set_Id)
             constraint_set_id_to_Constraint_Set_Object_map[Constraint_Set_Id].addConstraint(Constraint_Name,
                                                                                             Expected_Result,
                                                                                             constraint_type,
@@ -218,12 +216,82 @@ class ConstraintSet:
         global print_logs
         debug("ENTER addConstraint()")
         stack_depth += 1
+        debug("Constraint_Type:" + str(constraint_type))
+        debug("Constraint_Name:"+str(Constraint_Name))
 
         #todo add check that element and dimension cross product have same rank
 
         try:
-            error_msg = ""
+            error_msg = "\n"
             error_flag = False
+
+            #Generic Validation
+            if lower_bound == 'inf':
+                lower_bound = float('inf')
+
+            if upper_bound == 'inf':
+                upper_bound = float('inf')
+
+            if not pd.isna(lower_bound):
+                try:
+                    assert float(lower_bound) >= 0
+                except:
+                    error_flag = True
+                    error_msg += "Lower Bound must be non-negative\n"
+
+            if not pd.isna(upper_bound):
+                try:
+                    assert float(upper_bound) >= 0
+                except:
+                    error_flag = True
+                    error_msg += "Upper Bound must be non-negative\n"
+
+            if not pd.isna(lower_bound) and not pd.isna(upper_bound):
+                try:
+                    assert float(upper_bound) >= float(lower_bound)
+                except:
+                    error_flag = True
+                    error_msg += "Lower Bound must be less than upper bound\n"
+
+            if not pd.isna(Measure_Index):
+                try:
+                    int(Measure_Index)
+                    try:
+                        assert Measure_Index <= (self.df.shape[1] - 1)
+                        assert Measure_Index >= 0
+                    except:
+                        error_flag = True
+                        error_msg += "Measure Index out of bounds\n"
+                except:
+                    error_flag = True
+                    error_msg += "Measure Index is not an integer. Got:"+str(Measure_Index)+'\n'
+
+            if not pd.isna(Dimension_Index_List):
+                try:
+                    assert len(Dimension_Index_List.split(',')) >= 2
+                    for dimension_index in Dimension_Index_List.split(','):
+                        try:
+                            int(dimension_index)
+                            try:
+                                assert dimension_index <= self.df.shape[1] - 1
+                                assert dimension_index >= 0
+                            except:
+                                error_flag = True
+                                error_msg += "A dimension index was out of bounds.\n"
+                        except:
+                            error_flag = True
+                            error_msg += "A dimension index failed cast to int. Offending value:" + str(dimension_index) + '\n'
+                except:
+                    error_flag = True
+                    error_msg += "Dimension_Index_List has fewer than 2 items. Got:"+str(Measure_Index)+'\n'
+
+            try:
+                assert Warn_or_Fail == 0 or Warn_or_Fail == 1
+            except:
+                error_flag = True
+                error_msg += "Warn_or_Fail was not 0 or 1. Got:"+str(Warn_or_Fail)+"\n"
+
+            #Test Type Validation
             if constraint_type.lower().strip() == 'absolute file row count' \
                     or constraint_type.lower().strip() == 'relative file row count':
                 #Parameters that should not be defined
@@ -243,32 +311,16 @@ class ConstraintSet:
                 if pd.isna(lower_bound):
                     error_flag = True
                     error_msg += "Expected not N/A for lower_bound, but got N/A.\n"
-                else:
-                    try:
-                        int(lower_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast lower_bound to int. Lower_Bound:"+str(lower_bound)+"\n"
 
                 if pd.isna(upper_bound):
                     error_flag = True
                     error_msg += "Expected not N/A for upper_bound, but got N/A.\n"
-                else:
-                    try:
-                        int(upper_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast upper_bound to int. upper_bound:"+str(upper_bound)+"\n"
+
 
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
                     error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
-                else:
-                    try:
-                        bool(Warn_or_Fail)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast Warn_or_Fail to bool. Warn_or_Fail:"+str(Warn_or_Fail)+"\n"
+
 
 
             elif constraint_type.lower().strip() == 'absolute column cardinality' \
@@ -285,39 +337,24 @@ class ConstraintSet:
                     error_msg += "Expected N/A for Element. Got:" + str(Element) + '\n'
 
                 # Parameters that should be defined
-                if not pd.isna(Measure_Index):
+                if pd.isna(Measure_Index):
                     error_flag = True
-                    error_msg += "Expected N/A for Measure_Index. Got:" + str(Measure_Index) + '\n'
+                    error_msg += "Expected not N/A for Measure_Index, but got N/A.\n"
 
                 if pd.isna(lower_bound):
                     error_flag = True
                     error_msg += "Expected not N/A for lower_bound, but got N/A.\n"
-                else:
-                    try:
-                        int(lower_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast lower_bound to int. Lower_Bound:"+str(lower_bound)+"\n"
+
 
                 if pd.isna(upper_bound):
                     error_flag = True
                     error_msg += "Expected not N/A for upper_bound, but got N/A.\n"
-                else:
-                    try:
-                        int(upper_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast upper_bound to int. upper_bound:"+str(upper_bound)+"\n"
+
 
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
                     error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
-                else:
-                    try:
-                        bool(Warn_or_Fail)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast Warn_or_Fail to bool. Warn_or_Fail:"+str(Warn_or_Fail)+"\n"
+
 
             elif constraint_type.lower().strip() == 'absolute dimension cross product cardinality' \
                     or constraint_type.lower().strip() == 'relative dimension cross product cardinality':
@@ -338,32 +375,16 @@ class ConstraintSet:
                 if pd.isna(lower_bound):
                     error_flag = True
                     error_msg += "Expected not N/A for lower_bound, but got N/A.\n"
-                else:
-                    try:
-                        int(lower_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast lower_bound to int. Lower_Bound:"+str(lower_bound)+"\n"
 
                 if pd.isna(upper_bound):
                     error_flag = True
                     error_msg += "Expected not N/A for upper_bound, but got N/A.\n"
-                else:
-                    try:
-                        int(upper_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast upper_bound to int. upper_bound:"+str(upper_bound)+"\n"
+
 
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
                     error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
-                else:
-                    try:
-                        bool(Warn_or_Fail)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast Warn_or_Fail to bool. Warn_or_Fail:"+str(Warn_or_Fail)+"\n"
+
 
             elif constraint_type.lower().strip() == 'absolute dimension cross product element measure cardinality' \
                     or constraint_type.lower().strip() == 'absolute dimension cross product element measure null count' \
@@ -380,6 +401,14 @@ class ConstraintSet:
                     or constraint_type.lower().strip() == 'relative dimension cross product element measure mode' \
                     or constraint_type.lower().strip() == 'relative dimension cross product element measure max':
 
+                # if element is defined, then Dimension_Index_List must also be defined, and they must have the same rank
+                if not pd.isna(Element):
+                    try:
+                        assert len(Dimension_Index_List.split(',')) == len(Element.split(','))
+                    except:
+                        error_flag = True
+                        error_msg += "Dimension_Index_List and Element have different rank, which is an invalid test configuration.\n"
+
                 # Parameters that should be defined
                 if pd.isna(Dimension_Index_List):
                     error_flag = True
@@ -392,42 +421,21 @@ class ConstraintSet:
                 if pd.isna(Measure_Index):
                     error_flag = True
                     error_msg += "Expected not N/A for Measure_Index, but got N/A.\n"
-                else:
-                    try:
-                        int(Measure_Index)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast Measure_Index to int. Measure_Index:" + str(Measure_Index) + "\n"
 
                 if pd.isna(lower_bound):
                     error_flag = True
                     error_msg += "Expected not N/A for lower_bound, but got N/A.\n"
-                else:
-                    try:
-                        int(lower_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast lower_bound to int. Lower_Bound:"+str(lower_bound)+"\n"
+
 
                 if pd.isna(upper_bound):
                     error_flag = True
                     error_msg += "Expected not N/A for upper_bound, but got N/A.\n"
-                else:
-                    try:
-                        int(upper_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast upper_bound to int. upper_bound:"+str(upper_bound)+"\n"
+
 
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
                     error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
-                else:
-                    try:
-                        bool(Warn_or_Fail)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast Warn_or_Fail to bool. Warn_or_Fail:"+str(Warn_or_Fail)+"\n"
+
 
             elif constraint_type.lower().strip() == 'absolute layout' \
                     or constraint_type.lower().strip() == 'absolute header':
@@ -443,22 +451,12 @@ class ConstraintSet:
                 if not pd.isna(lower_bound):
                     error_flag = True
                     error_msg += "Expected N/A for Lower_Bound. Got:" + str(lower_bound) + '\n'
-                else:
-                    try:
-                        int(lower_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast lower_bound to int. Lower_Bound:"+str(lower_bound)+"\n"
+
 
                 if not pd.isna(upper_bound):
                     error_flag = True
                     error_msg += "Expected N/A for Upper_Bound. Got:" + str(upper_bound) + '\n'
-                else:
-                    try:
-                        int(upper_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast upper_bound to int. upper_bound:"+str(upper_bound)+"\n"
+
 
                 # Parameters that should be defined
                 if pd.isna(Element):
@@ -468,16 +466,11 @@ class ConstraintSet:
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
                     error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
-                else:
-                    try:
-                        bool(Warn_or_Fail)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast Warn_or_Fail to bool. Warn_or_Fail:"+str(Warn_or_Fail)+"\n"
+
 
 
             elif constraint_type.lower().strip() == 'absolute column name' \
-                    or constraint_type.lower().strip() == 'absolute data type':
+                    or constraint_type.lower().strip() == 'absolute column data type':
                 # Parameters that should not be defined
                 if not pd.isna(Dimension_Index_List):
                     error_flag = True
@@ -486,47 +479,54 @@ class ConstraintSet:
                 if not pd.isna(lower_bound):
                     error_flag = True
                     error_msg += "Expected N/A for Lower_Bound. Got:" + str(lower_bound) + '\n'
-                else:
-                    try:
-                        int(lower_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast lower_bound to int. Lower_Bound:"+str(lower_bound)+"\n"
+
 
                 if not pd.isna(upper_bound):
                     error_flag = True
                     error_msg += "Expected N/A for upper_bound. Got:" + str(upper_bound) + '\n'
-                else:
-                    try:
-                        int(upper_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast upper_bound to int. upper_bound:"+str(upper_bound)+"\n"
+
 
                 #Parameters that should be defined
                 if pd.isna(Element):
                     error_flag = True
                     error_msg += "Expected not N/A for Element, but got N/A.\n"
+                elif constraint_type.lower().strip() == 'absolute column data type':
+                    try:
+                        assert Element in ['bool','int','float','complex','object']
+                    except:
+                        error_flag = True
+                        error_msg += "Input data type was not one of: bool, int, float, complex, object. Offending value:"+str(Element)+"\n"
+                    # assert maps to one of these data types
+                    # Data type	Description
+                    # bool_	Boolean (True or False) stored as a byte
+                    # int_	Default integer type (same as C long; normally either int64 or int32)
+                    # intc	Identical to C int (normally int32 or int64)
+                    # intp	Integer used for indexing (same as C ssize_t; normally either int32 or int64)
+                    # int8	Byte (-128 to 127)
+                    # int16	Integer (-32768 to 32767)
+                    # int32	Integer (-2147483648 to 2147483647)
+                    # int64	Integer (-9223372036854775808 to 9223372036854775807)
+                    # uint8	Unsigned integer (0 to 255)
+                    # uint16	Unsigned integer (0 to 65535)
+                    # uint32	Unsigned integer (0 to 4294967295)
+                    # uint64	Unsigned integer (0 to 18446744073709551615)
+                    # float_	Shorthand for float64.
+                    # float16	Half precision float: sign bit, 5 bits exponent, 10 bits mantissa
+                    # float32	Single precision float: sign bit, 8 bits exponent, 23 bits mantissa
+                    # float64	Double precision float: sign bit, 11 bits exponent, 52 bits mantissa
+                    # complex_	Shorthand for complex128.
+                    # complex64	Complex number, represented by two 32-bit floats
+                    # complex128	Complex number, represented by two 64-bit floats
 
                 if pd.isna(Measure_Index):
                     error_flag = True
                     error_msg += "Expected not N/A for Measure_Index, but got N/A.\n"
-                else:
-                    try:
-                        int(Measure_Index)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast Measure_Index to int. Measure_Index:" + str(Measure_Index) + "\n"
+
 
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
                     error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
-                else:
-                    try:
-                        bool(Warn_or_Fail)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast Warn_or_Fail to bool. Warn_or_Fail:"+str(Warn_or_Fail)+"\n"
+
 
             elif constraint_type.lower().strip() == 'relative layout' \
                     or constraint_type.lower().strip() == 'relative header':
@@ -546,33 +546,18 @@ class ConstraintSet:
                 if not pd.isna(lower_bound):
                     error_flag = True
                     error_msg += "Expected N/A for Lower_Bound. Got:" + str(lower_bound) + '\n'
-                else:
-                    try:
-                        int(lower_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast lower_bound to int. Lower_Bound:"+str(lower_bound)+"\n"
+
 
                 if not pd.isna(upper_bound):
                     error_flag = True
                     error_msg += "Expected N/A for Upper_Bound. Got:" + str(upper_bound) + '\n'
-                else:
-                    try:
-                        int(upper_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast upper_bound to int. upper_bound:"+str(upper_bound)+"\n"
+
 
                 # Parameters that should be defined
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
                     error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
-                else:
-                    try:
-                        bool(Warn_or_Fail)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast Warn_or_Fail to bool. Warn_or_Fail:"+str(Warn_or_Fail)+"\n"
+
 
             elif constraint_type.lower().strip() == 'relative column data type' \
                     or constraint_type.lower().strip() == 'relative column name':
@@ -588,43 +573,22 @@ class ConstraintSet:
                 if not pd.isna(lower_bound):
                     error_flag = True
                     error_msg += "Expected N/A for Lower_Bound. Got:" + str(lower_bound) + '\n'
-                else:
-                    try:
-                        int(lower_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast lower_bound to int. Lower_Bound:"+str(lower_bound)+"\n"
 
                 if not pd.isna(upper_bound):
                     error_flag = True
                     error_msg += "Expected N/A for Upper_Bound. Got:" + str(upper_bound) + '\n'
-                else:
-                    try:
-                        int(upper_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast upper_bound to int. upper_bound:"+str(upper_bound)+"\n"
+
 
                 # Parameters that shoudl be defined
                 if pd.isna(Measure_Index):
                     error_flag = True
                     error_msg += "Expected not N/A for Measure_Index, but got N/A.\n"
-                else:
-                    try:
-                        int(Measure_Index)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast Measure_Index to int. Measure_Index:" + str(Measure_Index) + "\n"
+
 
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
                     error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
-                else:
-                    try:
-                        bool(Warn_or_Fail)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast Warn_or_Fail to bool. Warn_or_Fail:"+str(Warn_or_Fail)+"\n"
+
 
             elif constraint_type.lower().strip() == 'bounded overlap':
                 #Parameters that should not be defined
@@ -640,42 +604,22 @@ class ConstraintSet:
                 if pd.isna(Measure_Index):
                     error_flag = True
                     error_msg += "Expected not N/A for Measure_Index, but got N/A.\n"
-                else:
-                    try:
-                        int(Measure_Index)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast Measure_Index to int. Measure_Index:" + str(Measure_Index) + "\n"
+
 
                 if pd.isna(lower_bound):
                     error_flag = True
                     error_msg += "Expected not N/A for lower_bound, but got N/A.\n"
-                else:
-                    try:
-                        int(lower_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast lower_bound to int. Lower_Bound:"+str(lower_bound)+"\n"
+
 
                 if pd.isna(upper_bound):
                     error_flag = True
                     error_msg += "Expected not N/A for upper_bound, but got N/A.\n"
-                else:
-                    try:
-                        int(upper_bound)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast upper_bound to int. upper_bound:"+str(upper_bound)+"\n"
+
 
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
                     error_msg += "Expected not N/A for lower_bound, but got N/A.\n"
-                else:
-                    try:
-                        bool(Warn_or_Fail)
-                    except:
-                        error_flag = True
-                        error_msg += "Failed to cast Warn_or_Fail to bool. Warn_or_Fail:"+str(Warn_or_Fail)+"\n"
+
             else:
                 error_msg = "Unknown constraint type"
 
@@ -868,24 +812,18 @@ class ConstraintSet:
 
             try:
                 # is na ?
-                # Dimension_Index_List      Element     Measure_Index       Case Names
-                # Yes                       Yes         Yes                 Absolute\Relative File Row Count
-                # Yes                       Yes         No                  Bounded Overlap, Relative Column Data Type, Relative Column Name, Absolute\Relative Column F(x)
-                # Yes                       No          Yes                 --not valid. cant define an element if DCP is not defined.
-                # Yes                       No          No                  Absolute Column Name, Absolute Column Data Type
-                # No                        No          No                  Absolute\Relative Dimension Cross Product Element Measure F(x)
-                # No                        No          Yes                 Absolute\Relative Dimension Cross Product Element Row Count
-                # No                        Yes         No                  Absolute Header, Absolute Layout
-                # No                        Yes         Yes                 Absolute\Relative Dimension Cross Product Cardinality
+                # Parameter Case Dimension_Index_List      Element     Measure_Index       Case Names
+                # 000            Yes                       Yes         Yes                 Absolute\Relative File Row Count, Relative Header, Relative Layout
+                # 001            Yes                       Yes         No                  Bounded Overlap, Relative Column Data Type, Relative Column Name, Absolute\Relative Column F(x)
+                # 010            Yes                       No          Yes                 Absolute Header, Absolute Layout
+                # 011            Yes                       No          No                  Absolute Column Name, Absolute Column Data Type
+                # 100            No                        No          No                  Absolute\Relative Dimension Cross Product Element Measure F(x)
+                # 101            No                        No          Yes                 Absolute\Relative Dimension Cross Product Element Row Count
+                # 110            No                        Yes         No
+                # 111            No                        Yes         Yes                 Absolute\Relative Dimension Cross Product Cardinality
 
-                #this is an invalid case in the if branch below, but I want to assert that it isnt happening here so that we still et 100% code coverage during testing
-                #pd.isna(Dimension_Index_List) and not pd.isna(Element) and pd.isna(Measure_Index):  # not valid. #todo assert that this is not happening
-                #debug('Dimension_Index_List:' + str(pd.isna(Dimension_Index_List))) #todo add these to logs if a debug flag is True
-                #debug('Element:' + str(pd.isna(Element)))
-                #debug('Measure_Index:' + str(pd.isna(Measure_Index)))
-                #debug('Fun:' + str(Fun))
 
-                if pd.isna(Dimension_Index_List) and pd.isna(Element) and pd.isna(Measure_Index):  #Absolute\Relative File Row Count Case
+                if pd.isna(Dimension_Index_List) and pd.isna(Element) and pd.isna(Measure_Index):  #Absolute\Relative File Row Count Case, Relative Header, Relative Layout
                     debug("Parameter Case 000")
                     assert Fun == 'count'
 
@@ -915,37 +853,74 @@ class ConstraintSet:
                         result_value = -1 #todo
                     else:
                         pass #todo attempt literal interpretation?
+                elif pd.isna(Dimension_Index_List) and not pd.isna(Element) and pd.isna(Measure_Index):  # Absolute Header, Absolute Layout
+                    debug("Parameter Case 010")
+
+                    result_value = True
+                    result_value = len(Element.split(',')) == self.df.shape[1]
+
+                    if result_value: #if this were not here, then the layout having too many columns would throw an exception
+                        for i in range(0,len(Element.split(','))):
+                            if Element.split(',')[i] != self.df.columns[i]:
+                                result_value = False
+
                 elif pd.isna(Dimension_Index_List) and not pd.isna(Element) and not pd.isna(Measure_Index):  # Absolute Column Name, Absolute Column Data Type
                     debug("Parameter Case 011")
                     if Fun == 'absolute column name':
-                        result_value = -1  # todo
+                        result_value = self.df.columns[Measure_Index] == Element
                     elif Fun == 'absolute column data type':
-                        result_value = -1  # todo
+
+                        # Data type	Description
+                        # bool_	Boolean (True or False) stored as a byte
+                        # int_	Default integer type (same as C long; normally either int64 or int32)
+                        # intc	Identical to C int (normally int32 or int64)
+                        # intp	Integer used for indexing (same as C ssize_t; normally either int32 or int64)
+                        # int8	Byte (-128 to 127)
+                        # int16	Integer (-32768 to 32767)
+                        # int32	Integer (-2147483648 to 2147483647)
+                        # int64	Integer (-9223372036854775808 to 9223372036854775807)
+                        # uint8	Unsigned integer (0 to 255)
+                        # uint16	Unsigned integer (0 to 65535)
+                        # uint32	Unsigned integer (0 to 4294967295)
+                        # uint64	Unsigned integer (0 to 18446744073709551615)
+                        # float_	Shorthand for float64.
+                        # float16	Half precision float: sign bit, 5 bits exponent, 10 bits mantissa
+                        # float32	Single precision float: sign bit, 8 bits exponent, 23 bits mantissa
+                        # float64	Double precision float: sign bit, 11 bits exponent, 52 bits mantissa
+                        # complex_	Shorthand for complex128.
+                        # complex64	Complex number, represented by two 32-bit floats
+                        # complex128	Complex number, represented by two 64-bit floats
+
+                        #Also
+                        # str
+
+                        debug("Evaluating absolute column data type")
+                        debug(str(self.df.dtypes[Measure_Index])+" ?= "+str(Element))
+
+                        if Element == 'bool':
+                            result_value = self.df.dtypes[Measure_Index] in ['bool']
+                        elif Element == 'int':
+                            result_value = self.df.dtypes[Measure_Index] in ['int','int32','int64','intc','intp','int8',
+                                                                             'int16','int32','int64','uint8','uint16',
+                                                                             'uint16','uint32','uint64']
+                        elif Element == 'float':
+                            result_value = self.df.dtypes[Measure_Index] in ['float','float16','float32','float64']
+                        elif Element == 'complex':
+                            result_value = self.df.dtypes[Measure_Index] in ['complex', 'complex64', 'complex128']
+                        elif Element == 'str':
+                            result_value = self.df.dtypes[Measure_Index] in ['str']
+                        elif Element == 'object':
+                            result_value = self.df.dtypes[Measure_Index] in ['object']
+
                     else:
                         error("Parameter combination matched Absolute Column Name/Data Type case, but Fun did not match the expected value for that case.")
                         #todo put this as an assertion
                         raise ValueError
-                elif not pd.isna(Dimension_Index_List) and not pd.isna(Element) and not pd.isna(Measure_Index):  # Absolute\Relative Dimension Cross Product Element Measure F(x)
-                    debug("Parameter Case 111")
-                    if Fun == 'cardinality':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
-                    elif Fun == 'null count':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
-                    elif Fun == 'min':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
-                    elif Fun == 'mean':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
-                    elif Fun == 'median':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
-                    elif Fun == 'mode':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
-                    elif Fun == 'max':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
-                    else:
-                        pass  # todo attempt literal interpretation?
-                elif not pd.isna(Dimension_Index_List) and not pd.isna(Element) and pd.isna(Measure_Index):  # Absolute\Relative Dimension Cross Product Element Row Count
-                    debug("Parameter Case 110")
-                    result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
+                elif not pd.isna(Dimension_Index_List) and pd.isna(Element) and pd.isna(Measure_Index):  # Dimension Cross Product Cardinality Case
+                    debug("Parameter Case 100")
+                    debug("Computing result for Absolute Dimension Cross Product Cardinality Case")
+                    assert Fun == 'cardinality'
+                    result_value = self.df.loc[:, dimension_column_names_list].drop_duplicates().shape[0]
                 elif not pd.isna(Dimension_Index_List) and pd.isna(Element) and not pd.isna(Measure_Index):  # Absolute Header, Absolute Layout
                     debug("Parameter Case 101")
                     if Fun == 'cardinality':
@@ -973,12 +948,27 @@ class ConstraintSet:
                     else:
                         result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
                             'max'].reset_index()  # todo
-                elif not pd.isna(Dimension_Index_List) and pd.isna(Element) and pd.isna(Measure_Index):  # Dimension Cross Product Cardinality Case
-                    debug("Parameter Case 100")
-                    debug("Computing result for Absolute Dimension Cross Product Cardinality Case")
-                    assert Fun == 'cardinality'
-                    result_value = self.df.loc[:, dimension_column_names_list].drop_duplicates().shape[0]
-
+                elif not pd.isna(Dimension_Index_List) and not pd.isna(Element) and pd.isna(Measure_Index):  # Absolute\Relative Dimension Cross Product Element Row Count
+                    debug("Parameter Case 110")
+                    result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
+                elif not pd.isna(Dimension_Index_List) and not pd.isna(Element) and not pd.isna(Measure_Index):  # Absolute\Relative Dimension Cross Product Element Measure F(x)
+                    debug("Parameter Case 111")
+                    if Fun == 'cardinality':
+                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
+                    elif Fun == 'null count':
+                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
+                    elif Fun == 'min':
+                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
+                    elif Fun == 'mean':
+                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
+                    elif Fun == 'median':
+                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
+                    elif Fun == 'mode':
+                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
+                    elif Fun == 'max':
+                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
+                    else:
+                        pass  # todo attempt literal interpretation?
                 else:
                     debug("Unmapped parameter combination ZZZ")
                     debug('Dimension_Index_List:' + str(pd.isna(Dimension_Index_List)))
@@ -1012,16 +1002,31 @@ class ConstraintSet:
                 result_value = result_set_df[sel_vec, len(result_set_df.columns) - 1]
             else:
                 self.memoized_values[memo_key] = result_value
+        else:
+            debug('result_value found in memoized values')
         debug('SET result_value = ' + str(self.memoized_values[memo_key]))
 
         # value is memoized
-        initial_result = lower_bound <= self.memoized_values[memo_key] and self.memoized_values[memo_key] <= upper_bound
-        if Expected_Result == 'PASS':
-            debug("CHECKING IS TRUE: "+str(lower_bound)+ " <= "+str(self.memoized_values[memo_key])+" <= "+str(upper_bound))
-        elif Expected_Result == 'FAIL':
-            debug("CHECKING IS FALSE: " + str(lower_bound) + " <= " + str(self.memoized_values[memo_key]) + " <= " + str(upper_bound))
+        debug("constraint_type:"+str(constraint_type))
+        if constraint_type not in ['absolute column data type','absolute header','relative column data type','relative header', \
+                                   'absolute layout', 'relative layout','absolute column name','relative column name']:
+            initial_result = lower_bound <= self.memoized_values[memo_key] and self.memoized_values[memo_key] <= upper_bound
+            if Expected_Result == 'PASS':
+                debug("CHECKING IS TRUE: "+str(lower_bound)+ " <= "+str(self.memoized_values[memo_key])+" <= "+str(upper_bound))
+            elif Expected_Result == 'FAIL':
+                debug("CHECKING IS FALSE: " + str(lower_bound) + " <= " + str(self.memoized_values[memo_key]) + " <= " + str(upper_bound))
 
+        #Tests not defined by bounds
+        else:
+            initial_result = self.memoized_values[memo_key]
+            if Expected_Result == 'PASS':
+                debug("CHECKING IS TRUE: "+str(self.memoized_values[memo_key]))
+            elif Expected_Result == 'FAIL':
+                debug("CHECKING IS TRUE: "+str(self.memoized_values[memo_key]))
 
+        debug('initial_result:'+str(initial_result))
+        debug('Expected_Result == PASS:'+str(Expected_Result == 'PASS'))
+        debug('Expected_Result == FAIL:' + str(Expected_Result == 'FAIL'))
         if ( initial_result and Expected_Result == 'PASS') or ( not initial_result and Expected_Result == 'FAIL'):
             stack_depth -= 1
             debug("EXIT checkAbsoluteConstraint()")
