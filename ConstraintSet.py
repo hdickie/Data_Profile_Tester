@@ -6,7 +6,7 @@ import datetime
 import statistics
 
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.ERROR)
 logging.basicConfig(format='%(asctime)s ' + 'ConstraintSet' + ' %(levelname)s| %(message)s')
 
 global stack_depth
@@ -57,6 +57,7 @@ def create_test_constraint_sets_map_from_xlsx(xlsx_path):
 
     # Constraint_Set_Name	Constraint_Set_Id	Constraint_Name	constraint_type	Dimension_Index_List	Element	lower_bound	upper_bound	Warn_or_Fail
     constraint_def_df = pd.read_excel(xlsx_path, sheet_name="Constraint Definitions")
+    debug("constraint_def_df:\n"+constraint_def_df.to_string())
 
     # Data Set Name	Description	Data Set Path
     data_set_def_df = pd.read_excel(xlsx_path, sheet_name="Data Set Definitions")
@@ -75,10 +76,10 @@ def create_test_constraint_sets_map_from_xlsx(xlsx_path):
         Primary_Data_Set_Name = constraint_set_def_df.iloc[i, 2]
         Secondary_Data_Set_Name = constraint_set_def_df.iloc[i, 3]
 
-        # logging.debug("Constraint_Set_Name:"+Constraint_Set_Name)
-        # logging.debug("Constraint_Set_Id:" + str(Constraint_Set_Id))
-        # logging.debug("Primary_Data_Set_Name:" + Primary_Data_Set_Name)
-        # logging.debug("Secondary_Data_Set_Name:" + Secondary_Data_Set_Name)
+        debug("Constraint_Set_Name:"+Constraint_Set_Name)
+        debug("Constraint_Set_Id:" + str(Constraint_Set_Id))
+        debug("Primary_Data_Set_Name:" + Primary_Data_Set_Name)
+        debug("Secondary_Data_Set_Name:" + Secondary_Data_Set_Name)
 
         if Secondary_Data_Set_Name == 'None':
             constraint_set_id_to_Constraint_Set_Object_map[Constraint_Set_Id] = ConstraintSet(Constraint_Set_Name,
@@ -107,9 +108,13 @@ def create_test_constraint_sets_map_from_xlsx(xlsx_path):
         upper_bound = constraint_def_df.iloc[i, 9]
         Warn_or_Fail = constraint_def_df.iloc[i, 10]
 
-        # print(str(Constraint_Set_Id)+":"+Constraint_Set_Name)
+        debug('Constraint_Set_Id:'+str(Constraint_Set_Id))
+        debug("Constraint_Set_Name:"+str(Constraint_Set_Name))
+        debug("constraint_def_df:\n"+str(constraint_def_df.to_string()))
 
         try:
+            debug(constraint_set_id_to_Constraint_Set_Object_map)
+            debug(Constraint_Set_Id)
             constraint_set_id_to_Constraint_Set_Object_map[Constraint_Set_Id].addConstraint(Constraint_Name,
                                                                                             Expected_Result,
                                                                                             constraint_type,
@@ -187,118 +192,6 @@ class ConstraintSet:
                 running_str += str(curr_constr['warn_or_fail']).ljust(13)
 
                 running_str += '\n'
-
-        # af_lines=""
-        # rf_lines=""
-        # acc_lines=""
-        # acnc_lines=""
-        # rcc_lines=""
-        # rcnc_lines=""
-
-        # Constraint_Name	constraint_type	Dimension_Index_List	Element	lower_bound	upper_bound Expected_Result	Warn_or_Fail
-        # for key in self.constraint_id_to_args_dict_map.keys():
-        #	if self.constraint_id_to_args_dict_map[key]['constraint_type'] == 'Absolute File Row Count':
-        #		af_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_type']).ljust(40)
-        #		af_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_id']).ljust(5)
-        #		af_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_name']).ljust(40)
-        #		af_lines += "".ljust(40)
-        #		af_lines += str(self.constraint_id_to_args_dict_map[key]['args']['lower_bound']).ljust(8)
-        #		af_lines += str(self.constraint_id_to_args_dict_map[key]['args']['upper_bound']).ljust(8)
-        #		#af_lines += str(self.constraint_id_to_args_dict_map[key]['expected_result']['upper_bound']).ljust(8)
-        #		af_lines += str(self.constraint_id_to_args_dict_map[key]['args']['warn_or_fail'])
-        #	elif self.constraint_id_to_args_dict_map[key]['constraint_type'] == 'Relative File Row Count':
-        #		rf_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_type']).ljust(40)
-        #		rf_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_id']).ljust(5)
-        #		rf_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_name']).ljust(40)
-        #		rf_lines += "".ljust(40)
-        #		rf_lines += str(self.constraint_id_to_args_dict_map[key]['args']['lower_bound']).ljust(8)
-        #		rf_lines += str(self.constraint_id_to_args_dict_map[key]['args']['upper_bound']).ljust(8)
-        #		# rf_lines += str(self.constraint_id_to_args_dict_map[key]['expected_result']['upper_bound']).ljust(8)
-        #		rf_lines += str(self.constraint_id_to_args_dict_map[key]['args']['warn_or_fail'])
-        #	elif self.constraint_id_to_args_dict_map[key]['constraint_type'] == 'Absolute Column Cardinality':
-        #		acc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_type']).ljust(40)
-        #		acc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_id']).ljust(5)
-        #		acc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_name']).ljust(40)
-        #		acc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['dimension_index_list']).ljust(40)
-        #		acc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['lower_bound']).ljust(8)
-        #		acc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['upper_bound']).ljust(8)
-        #		# acc_lines += str(self.constraint_id_to_args_dict_map[key]['expected_result']['upper_bound']).ljust(8)
-        #		acc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['warn_or_fail'])
-        #	elif self.constraint_id_to_args_dict_map[key]['constraint_type'] == 'Absolute Column Null Count':
-        #		acnc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_type']).ljust(40)
-        #		acnc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_id']).ljust(5)
-        #		acnc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_name']).ljust(40)
-        #		acnc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['dimension_index_list']).ljust(40)
-        #		acnc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['lower_bound']).ljust(8)
-        #		acnc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['upper_bound']).ljust(8)
-        #		# acnc_lines += str(self.constraint_id_to_args_dict_map[key]['expected_result']['upper_bound']).ljust(8)
-        #		acnc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['warn_or_fail'])
-        #	elif self.constraint_id_to_args_dict_map[key]['constraint_type'] == 'Relative Column Cardinality':
-        #		rcc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_type']).ljust(40)
-        #		rcc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_id']).ljust(5)
-        #		rcc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_name']).ljust(40)
-        #		rcc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['lower_bound']).ljust(8)
-        #		rcc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['upper_bound']).ljust(8)
-        #		# rcc_lines += str(self.constraint_id_to_args_dict_map[key]['expected_result']['upper_bound']).ljust(8)
-        #		rcc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['warn_or_fail'])
-        #	elif self.constraint_id_to_args_dict_map[key]['constraint_type'] == 'Relative Column Null Count':
-        #		rcnc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_type']).ljust(40)
-        #		rcnc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_id']).ljust(5)
-        #		rcnc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['constraint_name']).ljust(40)
-        #		rcnc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['lower_bound']).ljust(8)
-        #		rcnc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['upper_bound']).ljust(8)
-        #		# rcnc_lines += str(self.constraint_id_to_args_dict_map[key]['expected_result']['upper_bound']).ljust(8)
-        #		rcnc_lines += str(self.constraint_id_to_args_dict_map[key]['args']['warn_or_fail'])
-
-        # running_str += "Absolute File Constraints" + "\n"
-        # if af_lines == "":
-        #	running_str += "None" + "\n"
-        # else:
-        #	running_str += "ID".ljust(5,'.') + "Name".ljust(40,'.') + "".ljust(40,'.') + "lower_bound".ljust(8,'.') + "upper_bound".ljust(8,'.') + "Warn_or_Fail" + '\n'
-        #	running_str += af_lines + "\n"
-        # running_str += '\n'
-
-        # running_str += "Relative File Constraints" + "\n"
-        # if rf_lines == "":
-        #	running_str += "None" + "\n"
-        # else:
-        #	running_str += "ID".ljust(5,'.') + "Name".ljust(40,'.') + "lower_bound".ljust(8,'.') + "upper_bound".ljust(8,'.') + "Warn_or_Fail" + '\n'
-        #	running_str += rf_lines + "\n"
-        # running_str += '\n'
-
-        # running_str += "Absolute Column Cardinality" + "\n"
-        # if acc_lines == "":
-        #	running_str += "None" + "\n"
-        # else:
-        #	running_str += "ID".ljust(5,'.') + "Name".ljust(40,'.') + "column_name".ljust(40,'.') + "lower_bound".ljust(8,'.') + "upper_bound".ljust(8,'.') + "Warn_or_Fail" + '\n'
-        #	running_str += acc_lines + "\n"
-        # running_str += '\n'
-
-        # running_str += "Relative Column Cardinality" + "\n"
-        # if rcc_lines == "":
-        #	running_str += "None" + "\n"
-        # else:
-        #	running_str += rcc_lines + "\n"
-        # running_str += '\n'
-
-        # running_str += "Absolute Column Null Count" + "\n"
-        # if acnc_lines == "":
-        #	running_str += "None" + "\n"
-        # else:
-        #	running_str += "ID".ljust(5,'.') + "Name".ljust(40,'.') + "column_name".ljust(40,'.') + "lower_bound".ljust(8,'.') + "upper_bound".ljust(8,'.') + "Warn_or_Fail" + '\n'
-        #	running_str += acnc_lines + "\n"
-        # running_str += '\n'
-
-        # running_str += "Relative Column Null Count" + "\n"
-        # if rcnc_lines == "":
-        #	running_str += "None" + "\n"
-        # else:
-        #	running_str += rcnc_lines + "\n"
-        # running_str += '\n'
-
-        # running_str += "Constraint Name Map"
-        # running_str += str(self.constraint_name_map)
-
         return running_str
 
     def __init__(self, constraint_set_name, constraint_set_id, df, relative_df):
@@ -316,75 +209,6 @@ class ConstraintSet:
         self.constraint_name_map = {}
         self.constraint_id_to_args_dict_map = {}
         self.constraint_type_to_constraint_list_map = {}
-
-    # def addAbsoluteFileRowCountConstraint(self,constraint_name, lower_bound,upper_bound,warn_or_fail):
-    #	new_constraint_id = self.getNewConstraintId()
-    #	args_dict = {"constraint_id":new_constraint_id,
-    #				"constraint_name":constraint_name,
-    #				 "lower_bound":lower_bound,
-    #				 "upper_bound":upper_bound,
-    #				 "warn_or_fail":warn_or_fail}
-    #	self.addConstraintToConstraintMap(new_constraint_id, "Absolute File", args_dict)
-    #	self.absolute_file_constraints.loc[len(self.absolute_file_constraints.index)] = [new_constraint_id,
-    #																					 constraint_name,
-    #																					 lower_bound,
-    #																					 upper_bound,
-    #																					 warn_or_fail]
-
-    # def addColumnDataTypeConstraint(self,constraint_name, column_index,data_type,warn_or_fail):
-    #	column_name = self.df.columns[column_index]
-
-    #	new_constraint_id = self.getNewConstraintId()
-    #	args_dict = {"constraint_id": new_constraint_id,
-    #				 "constraint_name": constraint_name,
-    #				 "column_name": column_name,
-    #				 "data_type": data_type,
-    #				 "warn_or_fail": warn_or_fail}
-    #	self.addConstraintToConstraintMap(new_constraint_id, "Column Data Type", args_dict)
-    #	self.column_data_type_constraints.loc[len(self.column_data_type_constraints.index)] = [new_constraint_id,
-    #																								 constraint_name,
-    #																								 column_name,
-    #																								 data_type,
-    #																								 warn_or_fail]
-
-    # def addColumnNameConstraint(self,constraint_name, column_index,goal_column_name,warn_or_fail):
-
-    #	new_constraint_id = self.getNewConstraintId()
-    #	args_dict = {"constraint_id": new_constraint_id,
-    #				 "constraint_name": constraint_name,
-    #				 "column_index": column_index,
-    #				 "goal_column_name": goal_column_name,
-    #				 "warn_or_fail": warn_or_fail}
-    #	self.addConstraintToConstraintMap(new_constraint_id, "Column Name", args_dict)
-    #	self.column_name_constraints.loc[len(self.column_name_constraints.index)] = [new_constraint_id,
-    #																				 constraint_name,
-    #																				 column_index,
-    #																				 goal_column_name,
-    #																				 warn_or_fail]
-
-    # def addAbsoluteColumnConstraint(self,Constraint_Name,Expected_Result ,Dimension_Index_List,Fun,lower_bound, upper_bound,Warn_or_Fail):
-    #	new_constraint_id = self.getNewConstraintId()
-    #
-    #	if Fun == 'cardinality':
-    #		constraint_type = 'Absolute Column Cardinality'
-    #	elif Fun == 'null count':
-    #		constraint_type = 'Absolute Column Null Count'
-    #	else:
-    #		try:
-    #			pass #compute input Function
-    #		except Exception as e:
-    #			error(e)
-    #			raise e
-    #
-    #	constraint_def_dict = {'constraint_name': Constraint_Name,
-    #										   'expected_result': Expected_Result,
-    #										   'constraint_type': constraint_type,
-    #										   'Dimension_Index_List': Dimension_Index_List,
-    #										   'element': None,
-    #										   'lower_bound': lower_bound,
-    #										   'upper_bound': upper_bound,
-    #										   'warn_or_fail': Warn_or_Fail}
-    #	self.addConstraintToConstraintMap(new_constraint_id, constraint_def_dict)
 
     def addConstraint(self, Constraint_Name, Expected_Result, constraint_type, Dimension_Index_List, Element,
                       Measure_Index, lower_bound, upper_bound, Warn_or_Fail):
@@ -495,169 +319,6 @@ class ConstraintSet:
         stack_depth -= 1
         debug("EXIT addConstraint()")
 
-    # def addDataLayoutConstraint(self,constraint_name, data_type_list,warn_or_fail):
-    #	new_constraint_id = self.getNewConstraintId()
-    #	args_dict = {"constraint_id": new_constraint_id,
-    #				 "constraint_name": constraint_name,
-    #				 "data_type_list": data_type_list,
-    #				 "warn_or_fail": warn_or_fail}
-    #	self.addConstraintToConstraintMap(new_constraint_id, "Data Layout", args_dict)
-    #	self.data_layout_constraints.loc[len(self.data_layout_constraints.index)] = [new_constraint_id,
-    #																						   constraint_name,
-    #																						   data_type_list,
-    #																						   warn_or_fail]
-
-    # def addHeaderConstraint(self,constraint_name, column_names,warn_or_fail):
-    #	new_constraint_id = self.getNewConstraintId()
-    #	args_dict = {"constraint_id": new_constraint_id,
-    #				 "constraint_name": constraint_name,
-    #				 "header_list": column_names,
-    #				 "warn_or_fail": warn_or_fail}
-    #	self.addConstraintToConstraintMap(new_constraint_id, "Header", args_dict)
-    #	self.header_constraints.loc[len(self.header_constraints.index)] = [new_constraint_id,
-    #																				 constraint_name,
-    #																				 column_names,
-    #																				 warn_or_fail]
-
-    # def addRelativeColumnConstraint(self,constraint_name, column_index,Fun,lower_bound,upper_bound,warn_or_fail):
-    #	column_name = self.df.columns[column_index]
-
-    #	new_constraint_id = self.getNewConstraintId()
-    #	args_dict = {"constraint_id": new_constraint_id,
-    #				 "constraint_name": constraint_name,
-    #				 "column_name": column_name,
-    #				 "lower_bound": lower_bound,
-    #				 "upper_bound": upper_bound,
-    #				 "warn_or_fail": warn_or_fail}
-    #	self.addConstraintToConstraintMap(new_constraint_id, "Relative Column Cardinality", args_dict)
-    #	self.relative_column_cardinality_constraints.loc[len(self.relative_column_cardinality_constraints.index)] = [
-    #		new_constraint_id,
-    #		constraint_name,
-    #		column_name,
-    #		lower_bound,
-    #		upper_bound,
-    #		warn_or_fail]
-
-    # def addRelativeFileRowCountConstraint(self,constraint_name, lower_bound,upper_bound,warn_or_fail):
-    #	new_constraint_id = self.getNewConstraintId()
-    #	args_dict = {"constraint_id": new_constraint_id,
-    #				 "constraint_name": constraint_name,
-    #				 "lower_bound": lower_bound,
-    #				 "upper_bound": upper_bound,
-    #				 "warn_or_fail": warn_or_fail}
-    #	self.addConstraintToConstraintMap(new_constraint_id, "Relative File", args_dict)
-    #	self.relative_file_constraints.loc[len(self.relative_file_constraints.index)] = [new_constraint_id,
-    #																					 constraint_name,
-    #																					 lower_bound,
-    #																					 upper_bound,
-    #																					 warn_or_fail]
-
-    # def checkAbsoluteColumnConstraint(self, column_name, Fun, lower_bound, upper_bound, warn_or_fail):
-    #	memo_key = 'Primary' + column_name + ' Column ' + Fun
-    #	if memo_key not in self.memoized_values.keys():
-    #		if Fun.lower() == 'sum':
-    #			self.memoized_values[memo_key] = sum(self.df[column_name])
-    #		elif Fun.lower() == 'null count':
-    #			self.memoized_values[memo_key] = sum(self.df[column_name].isnull())
-    #		elif Fun.lower() == 'cardinality':
-    #			self.memoized_values[memo_key] = len(self.df[column_name].unique())
-    #
-    #	if lower_bound <= self.memoized_values[memo_key] and self.memoized_values[memo_key] <= upper_bound:
-    #		return 0
-    #	elif warn_or_fail == 0:
-    #		logging.warning("Warning in checkAbsoluteColumnConstraint")
-    #	elif warn_or_fail == 1:
-    #		error("Error in checkAbsoluteColumnConstraint")
-    #		return 1
-    #	else:
-    #		error("what is happening in checkAbsoluteColumnConstraint()")
-    #		raise ValueError
-    #		return 1
-    #	return 1
-
-    # def checkRelativeColumnConstraint(self, column_name, Fun, lower_bound, upper_bound, warn_or_fail):
-    #	primary_memo_key = 'Primary' + column_name + ' Column ' + Fun
-    #	if primary_memo_key not in self.memoized_values.keys():
-    #		if Fun.lower() == 'sum':
-    #			self.memoized_values[primary_memo_key] = sum(self.df[column_name])
-    #		elif Fun.lower() == 'null count':
-    #			self.memoized_values[primary_memo_key] = sum(self.df[column_name].isnull())
-    #		elif Fun.lower() == 'cardinality':
-    #			self.memoized_values[primary_memo_key] = len(self.df[column_name].unique())
-
-    #	secondary_memo_key = 'Secondary' + column_name + ' Column ' + Fun
-    #	if secondary_memo_key not in self.memoized_values.keys():
-    #		if Fun.lower() == 'sum':
-    #			self.memoized_values[secondary_memo_key] = sum(self.df[column_name])
-    #		elif Fun.lower() == 'null count':
-    #			self.memoized_values[secondary_memo_key] = sum(self.df[column_name].isnull())
-    #		elif Fun.lower() == 'cardinality':
-    #			self.memoized_values[secondary_memo_key] = len(self.df[column_name].unique())
-    #
-    #	memo_key = column_name + ' Column ' + Fun + ' Ratio'
-    #	if memo_key not in self.memoized_values.keys():
-    #		try:
-    #			self.memoized_values[memo_key] = self.memoized_values[primary_memo_key]/self.memoized_values[secondary_memo_key]
-    #		except ZeroDivisionError:
-    #			self.memoized_values[memo_key] = float('inf')
-    #
-    #	if lower_bound <= self.memoized_values[memo_key] and self.memoized_values[memo_key] <= upper_bound:
-    #		return 0
-    #	elif warn_or_fail == 0:
-    #		logging.warning("Warning in checkRelativeColumnConstraint")
-    #	elif warn_or_fail == 1:
-    #		error("Error in checkRelativeColumnConstraint")
-    #		return 1
-    #	else:
-    #		error("what is happening in checkRelativeColumnConstraint()")
-    #		raise ValueError
-    #		return 1
-    #	return 1
-
-    # def checkAbsoluteDimensionCrossProductElementMeasureConstraint(self, Dimension_Index_List,
-    #																  Dimension_Cross_Product_Element,
-    #																  Measure_Column_Index, Fun, lower_bound, upper_bound,
-    #																  Warn_or_Fail):
-    #	memo_key = 'Primary '+str(Dimension_Index_List)+' '+str(Dimension_Cross_Product_Element)+' '+str(Measure_Column_Index)+' '+str(Fun)
-    #	if memo_key not in self.memoized_values.keys():
-    #		dimension_column_names_list = []
-    #		for column_index in Dimension_Index_List.split(','):
-    #			dimension_column_names_list += [self.df.columns[column_index]]
-
-    #		element_values_list = []
-    #		for element_value in Dimension_Cross_Product_Element.split(','):
-    #			dimension_column_names_list += [element_value]
-
-    #		measure_column_name = self.df.columns[Measure_Column_Index]
-
-    #		try:
-    #			result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[Fun].reset_index()
-    #		except Exception as e:
-    #			logging.debug(e)
-    #			return -1
-
-    # selecting the Dimension_Cross_Product_Element row from the pivot table output by the aggregation
-    #		for i in range(0, len(dimension_column_names_list)):
-    #			if i == 0:
-    #				sel_vec = result_set_df.loc[result_set_df[dimension_column_names_list[i]] == element_values_list[i]]
-    #			else:
-    #				sel_vec = sel_vec & (
-    #					result_set_df.loc[result_set_df[dimension_column_names_list[i]] == element_values_list[i]])
-    #	else:
-    #		#value is memoized
-    #		if lower_bound <= self.memoized_values[memo_key] and self.memoized_values[memo_key] <= upper_bound:
-    #			return 0
-    #		elif Warn_or_Fail == 0:
-    #			logging.warning("Warning in checkAbsoluteDimensionCrossProductElementMeasureConstraint")
-    #		elif Warn_or_Fail == 1:
-    #			error("Error in checkAbsoluteDimensionCrossProductElementMeasureConstraint")
-    #			return 1
-    #		else:
-    #			error("what is happening in checkAbsoluteDimensionCrossProductElementMeasureConstraint()")
-    #			raise ValueError
-    #			return 1
-    #		return 1
-
     def checkAllConstraints(self, printResults=True, outputFolder=None):
         global stack_depth
         global print_logs
@@ -676,32 +337,6 @@ class ConstraintSet:
                 "%Y%m%d_%H%M%S") + '.txt')
         stack_depth -= 1
         debug("EXIT checkAllConstraints")
-
-    # def checkColumnDataTypeConstraint(self, column_name, data_type, warn_or_fail):
-    #	column_index = self.df.columns.get_loc(column_name)
-    #	#logging.debug("enter checkColumnDataTypeConstraint()")
-    #	#logging.debug("column_name:"+str(column_name))
-    #	#logging.debug("goal data_type:" + str(data_type))
-    #	#logging.debug("actual data_type:" + str(self.df.dtypes[column_index]))
-
-    #	if self.df.dtypes[column_index] == data_type:
-    #		return 0
-    #	elif warn_or_fail == 0:
-    #		error("Warning in checkColumnDataTypeConstraint()")
-    #		return 0
-    #	else:
-    #		return 1
-
-    # def checkColumnNameConstraint(self, column_index, goal_column_name, warn_or_fail):
-    #	test_result = self.df.columns[column_index] == goal_column_name
-    #
-    #	if test_result == 0:
-    #		return 0
-    #	elif warn_or_fail == 0:
-    #		logging.warning("warning in checkColumnNameConstraint()")
-    #		return 0
-    #	else:
-    #		return 1
 
     def checkAbsoluteConstraint(self, Expected_Result, constraint_type, Fun, Dimension_Index_List, Element,
                                 Measure_Index, lower_bound, upper_bound, Warn_or_Fail):
@@ -1292,16 +927,6 @@ class ConstraintSet:
                 current_constraint["constraint_type"]) + '\'')
             raise ValueError
 
-        # logging.debug("test_result:"+str(test_result))
-        # if test_result == 1 and current_args['warn_or_fail'] == 1:
-        #	error("FAIL")
-        # elif test_result == 1 and current_args['warn_or_fail'] == 0:
-        #	logging.debug("WARN")
-        # elif test_result == 0:
-        #	logging.debug("PASS")
-        # else:
-        #	error("what the fuck is happening")
-
         stack_depth -= 1
         debug("EXIT checkConstraintById()")
 
@@ -1319,67 +944,6 @@ class ConstraintSet:
         constraint_id = self.constraint_name_map[constraint_name]
         debug("exit checkConstraintByName()")
         return self.checkConstraintById(constraint_id)
-
-        # def checkHeaderConstraint(self, column_names, warn_or_fail):
-        #	running_result = 0
-        #	for i in range(0,len(self.df.columns)):
-        #		try:
-        #			running_result += int(self.df.columns[i] == column_names[i])
-        #		except:
-        #			running_result += 1
-
-        #	if running_result == 0:
-        #		return 0
-        #	elif warn_or_fail == 0:
-        #		logging.warning("warning in checkHeaderConstraint()")
-        #		return 0
-        #	else:
-        #		return 1
-
-        # def checkLayoutConstraint(self, data_type_list, warn_or_fail):
-        # logging.debug("enter checkDataLayoutConstraint()")
-        running_result = 0
-
-    #	for i in range(0,len(self.df.columns)):
-    #		cname = self.df.columns[i]
-    #		running_result += self.checkColumnDataTypeConstraint(cname, data_type_list[i], 1)
-    #		logging.debug("running_result:"+str(running_result))
-
-    #	if running_result == 0:
-    #		return 0
-    #	elif warn_or_fail == 0:
-    #		logging.warning("Warning in checkDataLayoutConstraint()")
-    #		return 0
-    #	else:
-    #		return 1
-
-    # def checkRelativeColumnCardinalityConstraint(self, column_name,lower_bound,upper_bound,warn_or_fail):
-
-    #	column_index = self.df.columns.get_loc(column_name)
-
-    #	try:
-    #		if column_name + ' Column Cardinality Ratio' not in self.memoized_values.keys():
-    #			self.memoized_values[column_name + ' Column Cardinality Ratio'] = len(self.df.iloc[:, column_index].unique())
-
-    #		if lower_bound <= self.memoized_values[column_name + ' Column Cardinality Ratio'] and self.memoized_values[
-    #			column_name + ' Column Cardinality Ratio'] <= upper_bound:
-    #			return 0
-    #		elif warn_or_fail == 0:
-    #			logging.warning("Warning in checkRelativeColumnCardinalityConstraint")
-    #		elif warn_or_fail == 1:
-    #			error("Error in checkRelativeColumnCardinalityConstraint")
-    #			return 1
-    #		else:
-    #			error(
-    #				"what is happening in checkRelativeColumnCardinalityConstraint()")
-    #			raise ValueError
-    #			return 1
-
-    #	except Exception as e:
-    #		error("uncaught exception in checkRelativeColumnCardinalityConstraint()")
-    #		traceback.print_tb()
-    #		return -1
-    #	return 1
 
     def checkRelativeFileConstraint(self, lower_bound, upper_bound, warn_or_fail):
         global stack_depth
@@ -1424,34 +988,6 @@ class ConstraintSet:
 
     def getNewConstraintId(self):
         return len(self.constraint_id_to_args_dict_map.keys()) + 1
-
-    # def checkMutuallyExclusiveConstraint(self, column_name, warn_or_fail):
-
-    #	column_index = self.df.columns.get_loc(column_name)
-
-    #	logging.debug("column_index:"+str(column_index))
-    #	primary_column = self.df.iloc[:,column_index]
-    #	secondary_column = self.relative_df.iloc[:, column_index]
-
-    #	test_result = (len(set(primary_column).intersection(set(primary_column))) == 0)
-    #	if test_result == 0:
-    #		return 0
-    #	elif warn_or_fail == 0:
-    #		logging.warning("warning in checkMutuallyExclusiveConstraint")
-    #		return 1
-    #	else:
-    #		return 1
-
-    # def addMutuallyExclusiveConstraint(self,constraint_name, column_index,warn_or_fail):
-    #	column_name = self.df.columns[column_index]
-
-    #	new_constraint_id = self.getNewConstraintId()
-    #	args_dict = {"constraint_id": new_constraint_id,
-    #				 "constraint_name": constraint_name,
-    #				 "column_name": column_name,
-    #				 "warn_or_fail": warn_or_fail}
-    #	self.addConstraintToConstraintMap(new_constraint_id, "Mutually Exclusive", args_dict)
-    #	self.mutually_exclusive_constraints.loc[len(self.mutually_exclusive_constraints.index)] = [new_constraint_id,constraint_name,column_name,warn_or_fail]
 
     def showResults(self):
         # print("ID".ljust(5) + "Constraint Name".ljust(52)+"Result")

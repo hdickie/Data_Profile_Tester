@@ -20,14 +20,9 @@ class TestConstraintSet(TestCase):
         #print("#################################################")
         test_type_to_list_of_constraint_set_id_and_constraint_id_tuples = {}
         for constraint_set_id in self.test_set_definitions.keys():
-            #print('self.test_set_definitions.keys()')
-            #print(self.test_set_definitions[constraint_set_id])
-            #print(self.test_set_definitions[constraint_set_id])
+
             for constraint_id in self.test_set_definitions[constraint_set_id].constraint_id_to_args_dict_map.keys():
-                #print(constraint_id)
-                #print(self.test_set_definitions[constraint_set_id].constraint_id_to_args_dict_map)
-                #print(dir(self.test_set_definitions[constraint_set_id][constraint_id]))
-                #print(self.test_set_definitions[constraint_set_id].constraint_id_to_args_dict_map[constraint_id])
+
 
                 current_test_type = self.test_set_definitions[constraint_set_id].constraint_id_to_args_dict_map[constraint_id]['constraint_type']
 
@@ -44,11 +39,7 @@ class TestConstraintSet(TestCase):
         global print_logs
         debug("ENTER test_toString()")
         stack_depth += 1
-        #for i in range(0, len(relevant_test_tuples)):
-        #    current_tuple = relevant_test_tuples[i]
-        #    current_constraint_set = self.test_set_definitions[current_tuple[0]]
-        #    print(str)
-        #print(list(self.test_set_definitions.values())[0])
+
         debug("ASSERT test_toString()")
         stack_depth -= 1
         self.assertEqual(1, 0)  #todo hard code correct result to assert for test_toString()
@@ -59,10 +50,7 @@ class TestConstraintSet(TestCase):
         global print_logs
         debug("ENTER test_showResults()")
         stack_depth += 1
-        #for i in range(0, len(relevant_test_tuples)):
-        #    current_tuple = relevant_test_tuples[i]
-        #    current_constraint_set = self.test_set_definitions[current_tuple[0]]
-        #    current_constraint_set.showResults()
+
         list(self.test_set_definitions.values())[0].showResults()
         debug("ASSERT test_showResults()")
         stack_depth -= 1
