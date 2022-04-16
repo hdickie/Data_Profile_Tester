@@ -273,11 +273,12 @@ class ConstraintSet:
                         try:
                             int(dimension_index)
                             try:
-                                assert dimension_index <= self.df.shape[1] - 1
-                                assert dimension_index >= 0
-                            except:
+                                debug("checking dimension_index <= self.df.shape[1] - 1")
+                                debug(str(dimension_index)+" <= "+str(self.df.shape[1] - 1))
+                                assert 0 <= int(dimension_index) <= self.df.shape[1] - 1
+                            except Exception as e:
                                 error_flag = True
-                                error_msg += "A dimension index was out of bounds.\n"
+                                error_msg += "A dimension index was out of bounds. Offending value:"+str(dimension_index)+"\n"
                         except:
                             error_flag = True
                             error_msg += "A dimension index failed cast to int. Offending value:" + str(dimension_index) + '\n'
@@ -859,9 +860,18 @@ class ConstraintSet:
                     result_value = True
                     result_value = len(Element.split(',')) == self.df.shape[1]
 
-                    if result_value: #if this were not here, then the layout having too many columns would throw an exception
-                        for i in range(0,len(Element.split(','))):
+                    if result_value and Fun == 'absolute header': #if the result_value is True part of this condition wasnt here
+                        for i in range(0,len(Element.split(','))): #, then the layout having too many columns would throw an exception
                             if Element.split(',')[i] != self.df.columns[i]:
+                                result_value = False
+                    elif result_value and Fun == 'absolute layout':
+                        parent_data_type = {}
+                        parent_data_type['int64'] = 'int'
+                        parent_data_type['object'] = 'object'
+                        #todo add more data types to map
+
+                        for i in range(0,len(Element.split(','))):
+                            if parent_data_type[Element.split(',')[i]] != self.df.dtypes[i]:
                                 result_value = False
 
                 elif pd.isna(Dimension_Index_List) and not pd.isna(Element) and not pd.isna(Measure_Index):  # Absolute Column Name, Absolute Column Data Type
@@ -875,6 +885,7 @@ class ConstraintSet:
                         # int_	Default integer type (same as C long; normally either int64 or int32)
                         # intc	Identical to C int (normally int32 or int64)
                         # intp	Integer used for indexing (same as C ssize_t; normally either int32 or int64)
+                        # int8	Byte (-128 to 127)
                         # int8	Byte (-128 to 127)
                         # int16	Integer (-32768 to 32767)
                         # int32	Integer (-2147483648 to 2147483647)
@@ -953,20 +964,22 @@ class ConstraintSet:
                     result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
                 elif not pd.isna(Dimension_Index_List) and not pd.isna(Element) and not pd.isna(Measure_Index):  # Absolute\Relative Dimension Cross Product Element Measure F(x)
                     debug("Parameter Case 111")
+                    debug("Fun:"+str(Fun))
+
                     if Fun == 'cardinality':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
+                        result_set_df = pd.pivot_table(self.df, index=dimension_column_names_list, columns=[measure_column_name], aggfunc=lambda x: x.nunique())
                     elif Fun == 'null count':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
+                        result_set_df = pd.pivot_table(self.df, index=dimension_column_names_list, columns=[measure_column_name], aggfunc=lambda x: sum(x.isnull()))
                     elif Fun == 'min':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
+                        result_set_df = pd.pivot_table(self.df, index=dimension_column_names_list, columns=[measure_column_name], aggfunc='min')
                     elif Fun == 'mean':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
+                        result_set_df = pd.pivot_table(self.df, index=dimension_column_names_list, columns=[measure_column_name], aggfunc='mean')
                     elif Fun == 'median':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
+                        result_set_df = pd.pivot_table(self.df, index=dimension_column_names_list, columns=[measure_column_name], aggfunc='median')
                     elif Fun == 'mode':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
+                        result_set_df = pd.pivot_table(self.df, index=dimension_column_names_list, columns=[measure_column_name], aggfunc='mode')
                     elif Fun == 'max':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
+                        result_set_df = pd.pivot_table(self.df, index=dimension_column_names_list, columns=[measure_column_name], aggfunc='max')
                     else:
                         pass  # todo attempt literal interpretation?
                 else:
