@@ -112,6 +112,9 @@ def create_test_constraint_sets_map_from_xlsx(xlsx_path):
         #debug("Constraint_Set_Name:"+str(Constraint_Set_Name))
         #debug("constraint_def_df:\n"+str(constraint_def_df.to_string()))
 
+        if pd.isna(Constraint_Set_Id):
+            continue
+
         try:
             constraint_set_id_to_Constraint_Set_Object_map[Constraint_Set_Id].addConstraint(Constraint_Name,
                                                                                             Expected_Result,
@@ -220,6 +223,8 @@ class ConstraintSet:
         debug("Constraint_Name:"+str(Constraint_Name))
 
         #todo add check that element and dimension cross product have same rank
+
+        #todo dimension index list and measure cannot overlap
 
         try:
             error_msg = "\n"
@@ -967,19 +972,19 @@ class ConstraintSet:
                     debug("Fun:"+str(Fun))
 
                     if Fun == 'cardinality':
-                        result_set_df = pd.pivot_table(self.df, index=dimension_column_names_list, columns=[measure_column_name], aggfunc=lambda x: x.nunique())
+                        result_set_df = pd.pivot_table(self.df, columns=dimension_column_names_list, aggfunc=lambda x: x.nunique())
                     elif Fun == 'null count':
-                        result_set_df = pd.pivot_table(self.df, index=dimension_column_names_list, columns=[measure_column_name], aggfunc=lambda x: sum(x.isnull()))
+                        result_set_df = pd.pivot_table(self.df, columns=dimension_column_names_list, aggfunc=lambda x: sum(x.isnull()))
                     elif Fun == 'min':
-                        result_set_df = pd.pivot_table(self.df, index=dimension_column_names_list, columns=[measure_column_name], aggfunc='min')
+                        result_set_df = pd.pivot_table(self.df, columns=dimension_column_names_list, aggfunc='min')
                     elif Fun == 'mean':
-                        result_set_df = pd.pivot_table(self.df, index=dimension_column_names_list, columns=[measure_column_name], aggfunc='mean')
+                        result_set_df = pd.pivot_table(self.df, columns=dimension_column_names_list, aggfunc='mean')
                     elif Fun == 'median':
-                        result_set_df = pd.pivot_table(self.df, index=dimension_column_names_list, columns=[measure_column_name], aggfunc='median')
+                        result_set_df = pd.pivot_table(self.df, columns=dimension_column_names_list, aggfunc='median')
                     elif Fun == 'mode':
-                        result_set_df = pd.pivot_table(self.df, index=dimension_column_names_list, columns=[measure_column_name], aggfunc='mode')
+                        result_set_df = pd.pivot_table(self.df, columns=dimension_column_names_list, aggfunc='mode') #todo need to use a different mode function
                     elif Fun == 'max':
-                        result_set_df = pd.pivot_table(self.df, index=dimension_column_names_list, columns=[measure_column_name], aggfunc='max')
+                        result_set_df = pd.pivot_table(self.df, columns=dimension_column_names_list, aggfunc='max')
                     else:
                         pass  # todo attempt literal interpretation?
                 else:
@@ -1002,17 +1007,15 @@ class ConstraintSet:
 
             # selecting the Dimension_Cross_Product_Element row from the pivot table output by the aggregation
             if len(dimension_column_names_list) > 0 and not pd.isna(Element):
-                for i in range(0, len(dimension_column_names_list)):
-                    debug("iterating sel vec. current column:"+str(dimension_column_names_list[i]))
-                    debug("whole list:"+str(dimension_column_names_list))
-                    if i == 0:
-                        sel_vec = result_set_df.loc[result_set_df[dimension_column_names_list[i]] == element_values_list[i]]
-                    else:
-                        sel_vec = sel_vec & (
-                            result_set_df.loc[result_set_df[dimension_column_names_list[i]] == element_values_list[i]])
-                    debug("....sel_vec:" + str(sel_vec))
-
-                result_value = result_set_df[sel_vec, len(result_set_df.columns) - 1]
+                #debug('result_set_df:\n'+str(result_set_df))
+                intermediate_result_pd_series = result_set_df[tuple(element_values_list)]
+                sel_vec_for_pivot_table = intermediate_result_pd_series.index == self.df.columns[Measure_Index]
+                debug('sel_vec_for_pivot_table:'+str(sel_vec_for_pivot_table))
+                result_value = intermediate_result_pd_series[sel_vec_for_pivot_table][0]
+                #result_value = result_set_df[tuple(element_values_list)][result_set_df.index == self.df.columns[Measure_Index]]
+                debug('result_value:'+str(result_value))
+                #debug('type(result_value):'+str(type(result_value)))
+                self.memoized_values[memo_key] = result_value
             else:
                 self.memoized_values[memo_key] = result_value
         else:
@@ -1243,7 +1246,7 @@ class ConstraintSet:
                 debug("B")
                 debug("memo_key".ljust(15, '.') + ":" + str(memo_key))
                 debug("C")
-                result_value = result_set_df[sel_vec, len(result_set_df.columns) - 1]
+                result_value = result_set_df.iloc[sel_vec, len(result_set_df.columns) - 1]
                 debug("result_value".ljust(15, '.') + ":" + str(result_value))
             else:
                 debug("D")
