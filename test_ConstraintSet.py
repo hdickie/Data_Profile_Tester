@@ -633,12 +633,12 @@ class TestConstraintSet(TestCase):
         self.execute_test_using_list_of_tuples(fail_tuples, success_tuples)
         info("FINISHED TEST: test_relative_column_name")
 
-    def test_relative_column_header(self):
-        info("RUNNING TEST: test_relative_column_header")
+    def test_relative_header(self):
+        info("RUNNING TEST: test_relative_header")
         all_success_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['PASS']
         all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
 
-        test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Column Header']
+        test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Header']
         debug("len(test_type_tuples):" + str(len(test_type_tuples)))
 
         fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples]  # this is list intersection
@@ -646,7 +646,7 @@ class TestConstraintSet(TestCase):
 
         info("There are " + str(len(fail_tuples) + len(success_tuples)) + " subtests.")
         self.execute_test_using_list_of_tuples(fail_tuples, success_tuples)
-        info("FINISHED TEST: test_relative_column_header")
+        info("FINISHED TEST: test_relative_header")
 
     def test_bounded_overlap(self):
         info("RUNNING TEST: test_bounded_overlap")

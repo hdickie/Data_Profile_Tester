@@ -4,6 +4,7 @@ import traceback
 import csv
 import datetime
 import statistics
+import scipy.stats
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -47,7 +48,7 @@ def create_test_constraint_sets_map_from_xlsx(xlsx_path):
     global stack_depth
     global print_logs
 
-    print_logs = True
+    print_logs = False
 
     debug("ENTER create_test_constraint_sets_map_from_xlsx()")
     stack_depth += 1
@@ -226,6 +227,10 @@ class ConstraintSet:
 
         #todo dimension index list and measure cannot overlap
 
+        #todo assert than numerical columns are specified on numerical measure columns
+
+        #todo bounded overlap params must be between 0 and 1
+
         try:
             error_msg = "\n"
             error_flag = False
@@ -260,7 +265,7 @@ class ConstraintSet:
 
             if not pd.isna(Measure_Index):
                 try:
-                    int(Measure_Index)
+                    Measure_Index = int(Measure_Index)
                     try:
                         assert Measure_Index <= (self.df.shape[1] - 1)
                         assert Measure_Index >= 0
@@ -697,7 +702,8 @@ class ConstraintSet:
         elif constraint_type_lower == "absolute dimension cross product element measure median" \
                 or constraint_type_lower == "relative dimension cross product element measure median":
             Fun = 'median'
-        elif constraint_type_lower == "absolute dimension cross product element measure mode":
+        elif constraint_type_lower == "absolute dimension cross product element measure mode" \
+                or constraint_type_lower == "relative dimension cross product element measure mode":
             Fun = 'mode'
         elif constraint_type_lower == "absolute dimension cross product element measure sum" \
                 or constraint_type_lower == "relative dimension cross product element measure sum":
@@ -764,6 +770,284 @@ class ConstraintSet:
         stack_depth -= 1
         debug("EXIT checkAllConstraints")
 
+    def calculateDataProfileStatistic(self,df,memo_key,Expected_Result, constraint_type, Fun, Dimension_Index_List, Element,
+                                Measure_Index, lower_bound, upper_bound, Warn_or_Fail):
+        debug("enter calculateDataProfileStatistic()")
+        global stack_depth
+        global print_logs
+        dimension_column_names_list = []
+        if memo_key not in self.memoized_values.keys():
+            debug(memo_key + " not in memoized values")
+
+            debug("Dimension_Index_List is NaN:" + str(pd.isna(Dimension_Index_List)))
+            if not pd.isna(Dimension_Index_List):
+                for column_index in str(Dimension_Index_List).split(','):
+                    dimension_column_names_list += [df.columns[int(column_index)]]
+
+            debug("Element is NaN.............:" + str(pd.isna(Element)))
+            if not pd.isna(Element):
+                element_values_list = []
+                for element_value in Element.split(','):
+                    element_values_list += [element_value]
+
+            debug("Measure_Index is NaN.......:" + str(pd.isna(Measure_Index)))
+            if not pd.isna(Measure_Index):
+                debug('Measure_Index..............:' + str(Measure_Index))
+                measure_column_name = df.columns[Measure_Index]
+                debug('Measure Column Name........:' + str(measure_column_name))
+
+            try:
+                # is na ?
+                # Parameter Case Dimension_Index_List      Element     Measure_Index       Case Names
+                # 000            Yes                       Yes         Yes                 Absolute\Relative File Row Count, Relative Header, Relative Layout
+                # 001            Yes                       Yes         No                  Bounded Overlap, Relative Column Data Type, Relative Column Name, Absolute\Relative Column F(x)
+                # 010            Yes                       No          Yes                 Absolute Header, Absolute Layout
+                # 011            Yes                       No          No                  Absolute Column Name, Absolute Column Data Type
+                # 100            No                        No          No                  Absolute\Relative Dimension Cross Product Element Measure F(x)
+                # 101            No                        No          Yes                 Absolute\Relative Dimension Cross Product Element Row Count
+                # 110            No                        Yes         No
+                # 111            No                        Yes         Yes                 Absolute\Relative Dimension Cross Product Cardinality
+
+                if pd.isna(Dimension_Index_List) and pd.isna(Element) and pd.isna(
+                        Measure_Index):  # Absolute\Relative File Row Count Case, Relative Header, Relative Layout
+                    debug("Parameter Case 000")
+                    if  Fun == 'count':
+                        result_value = df.shape[0]
+                    elif Fun == 'relative layout':
+                        result_value = list(df.dtypes.index)
+                    elif Fun == 'relative header':
+                        result_value = list(df.columns)
+                    else:
+                        result_value = -1
+
+                elif pd.isna(Dimension_Index_List) and pd.isna(Element) and not pd.isna(
+                        Measure_Index):  # Bounded Overlap, Relative Column Data Type, Relative Column Name, Absolute\Relative Column F(x)
+                    debug("Parameter Case 001")
+                    if Fun == 'cardinality':
+                        result_value = df.iloc[:, Measure_Index].nunique()
+                    elif Fun == 'null count':
+                        result_value = sum(df.iloc[:, Measure_Index].isnull())
+
+                    #strings can legitimately be passed to these below functions, but this is not valid input for this project
+                    elif Fun == 'min':
+                        result_value = min(df.iloc[:, Measure_Index])
+                        try:
+                            float(result_value)
+                        except:
+                            result_value = -1
+                    elif Fun == 'mean':
+                        result_value = statistics.mean(df.iloc[:, Measure_Index])
+                        try:
+                            float(result_value)
+                        except:
+                            result_value = -1
+                    elif Fun == 'median':
+                        result_value = statistics.median(df.iloc[:, Measure_Index])
+                        try:
+                            float(result_value)
+                        except:
+                            result_value = -1
+                    elif Fun == 'mode':
+                        result_value = statistics.mode(df.iloc[:, Measure_Index])
+                        try:
+                            float(result_value)
+                        except:
+                            result_value = -1
+                    elif Fun == 'max':
+                        result_value = max(df.iloc[:, Measure_Index])
+                        try:
+                            float(result_value)
+                        except:
+                            result_value = -1
+                    elif Fun == 'relative column data type':
+                        result_value = -1  # todo
+                    elif Fun == 'relative column name':
+                        result_value = -1  # todo
+                    elif Fun == 'bounded overlap':
+                        result_value = -1  # todo
+                    else:
+                        pass  # todo attempt literal interpretation?
+                elif pd.isna(Dimension_Index_List) and not pd.isna(Element) and pd.isna(
+                        Measure_Index):  # Absolute Header, Absolute Layout
+                    debug("Parameter Case 010")
+
+                    result_value = True
+                    result_value = len(Element.split(',')) == df.shape[1]
+
+                    if result_value and Fun == 'absolute header':  # if the result_value is True part of this condition wasnt here
+                        for i in range(0, len(Element.split(','))):  # , then the layout having too many columns would throw an exception
+                            debug("Element.split(',')[i]:"+str(Element.split(',')[i]))
+                            debug("df.columns[i]:"+str(df.columns[i]))
+                            if Element.split(',')[i] != df.columns[i]:
+                                result_value = False
+                    elif result_value and Fun == 'absolute layout':
+                        parent_data_type = {}
+                        parent_data_type['int64'] = 'int'
+                        parent_data_type['object'] = 'object'
+                        parent_data_type['float64'] = 'float'
+                        # todo add more data types to map
+
+                        for i in range(0, len(Element.split(','))):
+                            debug("Element.split(',')["+str(i)+"]:" + str(Element.split(',')[i]) )
+                            debug("parent_data_type[str(df.dtypes["+str(i)+"])]:"+str(parent_data_type[str(df.dtypes[i])]))
+
+                            if Element.split(',')[i] != parent_data_type[str(df.dtypes[i])]:
+                                result_value = False
+
+                elif pd.isna(Dimension_Index_List) and not pd.isna(Element) and not pd.isna(
+                        Measure_Index):  # Absolute Column Name, Absolute Column Data Type
+                    debug("Parameter Case 011")
+                    if Fun == 'absolute column name':
+                        result_value = df.columns[Measure_Index] == Element
+                    elif Fun == 'absolute column data type':
+
+                        # Data type	Description
+                        # bool_	Boolean (True or False) stored as a byte
+                        # int_	Default integer type (same as C long; normally either int64 or int32)
+                        # intc	Identical to C int (normally int32 or int64)
+                        # intp	Integer used for indexing (same as C ssize_t; normally either int32 or int64)
+                        # int8	Byte (-128 to 127)
+                        # int8	Byte (-128 to 127)
+                        # int16	Integer (-32768 to 32767)
+                        # int32	Integer (-2147483648 to 2147483647)
+                        # int64	Integer (-9223372036854775808 to 9223372036854775807)
+                        # uint8	Unsigned integer (0 to 255)
+                        # uint16	Unsigned integer (0 to 65535)
+                        # uint32	Unsigned integer (0 to 4294967295)
+                        # uint64	Unsigned integer (0 to 18446744073709551615)
+                        # float_	Shorthand for float64.
+                        # float16	Half precision float: sign bit, 5 bits exponent, 10 bits mantissa
+                        # float32	Single precision float: sign bit, 8 bits exponent, 23 bits mantissa
+                        # float64	Double precision float: sign bit, 11 bits exponent, 52 bits mantissa
+                        # complex_	Shorthand for complex128.
+                        # complex64	Complex number, represented by two 32-bit floats
+                        # complex128	Complex number, represented by two 64-bit floats
+
+                        # Also
+                        # str
+
+                        debug("Evaluating absolute column data type")
+                        debug(str(df.dtypes[Measure_Index]) + " ?= " + str(Element))
+
+                        if Element == 'bool':
+                            result_value = df.dtypes[Measure_Index] in ['bool']
+                        elif Element == 'int':
+                            result_value = df.dtypes[Measure_Index] in ['int', 'int32', 'int64', 'intc', 'intp',
+                                                                             'int8',
+                                                                             'int16', 'int32', 'int64', 'uint8',
+                                                                             'uint16',
+                                                                             'uint16', 'uint32', 'uint64']
+                        elif Element == 'float':
+                            result_value = df.dtypes[Measure_Index] in ['float', 'float16', 'float32', 'float64']
+                        elif Element == 'complex':
+                            result_value = df.dtypes[Measure_Index] in ['complex', 'complex64', 'complex128']
+                        elif Element == 'str':
+                            result_value = df.dtypes[Measure_Index] in ['str']
+                        elif Element == 'object':
+                            result_value = df.dtypes[Measure_Index] in ['object']
+
+                    else:
+                        error(
+                            "Parameter combination matched Absolute Column Name/Data Type case, but Fun did not match the expected value for that case.")
+                        # todo put this as an assertion
+                        raise ValueError
+                elif not pd.isna(Dimension_Index_List) and pd.isna(Element) and pd.isna(
+                        Measure_Index):  # Dimension Cross Product Cardinality Case
+                    debug("Parameter Case 100")
+                    debug("Computing result for Absolute Dimension Cross Product Cardinality Case")
+                    assert Fun == 'cardinality'
+                    result_value = df.loc[:, dimension_column_names_list].drop_duplicates().shape[0]
+                elif not pd.isna(Dimension_Index_List) and pd.isna(Element) and not pd.isna(
+                        Measure_Index):  # Absolute Header, Absolute Layout
+                    debug("Parameter Case 101")
+                    if Fun == 'cardinality':
+                        result_set_df = df.groupby(dimension_column_names_list)[measure_column_name].agg('nunique').reset_index()
+                    elif Fun == 'mode':
+                        result_value = result_set_df = df.groupby(dimension_column_names_list)[measure_column_name].agg(lambda x: scipy.stats.mode(x))[0].mode[0]
+                    elif Fun == 'min':
+                        result_set_df = df.groupby(dimension_column_names_list)[measure_column_name].agg('min').reset_index()
+                    elif Fun == 'mean':
+                        result_set_df = df.groupby(dimension_column_names_list)[measure_column_name].agg('mean').reset_index()
+                    elif Fun == 'median':
+                        result_set_df = df.groupby(dimension_column_names_list)[measure_column_name].agg('median').reset_index()
+                    elif Fun == 'mode':
+                        result_set_df = df.groupby(dimension_column_names_list)[measure_column_name].agg('min').reset_index()
+                    elif Fun == 'max':
+                        result_set_df = df.groupby(dimension_column_names_list)[measure_column_name].agg('max').reset_index()
+                    else:
+                        result_set_df = df.groupby(dimension_column_names_list)[measure_column_name].agg('max').reset_index()  # todo
+                elif not pd.isna(Dimension_Index_List) and not pd.isna(Element) and pd.isna(
+                        Measure_Index):  # Absolute\Relative Dimension Cross Product Element Row Count
+                    result_value = df.loc[:,dimension_column_names_list].shape[0]
+                elif not pd.isna(Dimension_Index_List) and not pd.isna(Element) and not pd.isna(
+                        Measure_Index):  # Absolute\Relative Dimension Cross Product Element Measure F(x)
+                    debug("Parameter Case 111")
+                    debug("Fun:" + str(Fun))
+
+                    if Fun == 'cardinality':
+                        result_set_df = pd.pivot_table(df, columns=dimension_column_names_list,
+                                                       aggfunc=lambda x: x.nunique())
+                    elif Fun == 'null count':
+                        result_set_df = pd.pivot_table(df, columns=dimension_column_names_list,
+                                                       aggfunc=lambda x: sum(x.isnull()))
+                    elif Fun == 'min':
+                        result_set_df = pd.pivot_table(df, columns=dimension_column_names_list, aggfunc='min')
+                    elif Fun == 'mean':
+                        result_set_df = pd.pivot_table(df, columns=dimension_column_names_list, aggfunc='mean')
+                    elif Fun == 'median':
+                        result_set_df = pd.pivot_table(df, columns=dimension_column_names_list, aggfunc='median')
+                    elif Fun == 'mode':
+                        #result_set_df = pd.pivot_table(df, columns=dimension_column_names_list,aggfunc='min')
+                        result_value = result_set_df = df.groupby(dimension_column_names_list)[measure_column_name].agg(lambda x: scipy.stats.mode(x))[0].mode[0]
+                        debug("mode result:"+str(result_value))
+                    elif Fun == 'max':
+                        result_set_df = pd.pivot_table(df, columns=dimension_column_names_list, aggfunc='max')
+                    else:
+                        pass  # todo attempt literal interpretation?
+                else:
+                    debug("Unmapped parameter combination ZZZ")
+                    debug('Dimension_Index_List:' + str(pd.isna(Dimension_Index_List)))
+                    debug('Element:' + str(pd.isna(Element)))
+                    debug('Measure_Index:' + str(pd.isna(Measure_Index)))
+                    debug('Fun:' + str(Fun))
+                    result_value = -1  # todo
+
+            except Exception as e:
+                if Expected_Result == 'ERR':
+                    stack_depth -= 1
+                    debug("EXIT checkAbsoluteConstraint()")
+                    return 0
+                debug(e)
+                stack_depth -= 1
+                debug("EXIT checkAbsoluteConstraint()")
+                return -1
+
+            # selecting the Dimension_Cross_Product_Element row from the pivot table output by the aggregation
+            if len(dimension_column_names_list) > 0 and not pd.isna(Element) and Fun != 'mode' \
+                    and constraint_type != 'absolute dimension cross product element row count' \
+                    and constraint_type != 'relative dimension cross product element row count':
+                debug('df.columns:'+str(df.columns))
+                debug('result_set_df:\n'+str(result_set_df))
+                intermediate_result_pd_series = result_set_df[tuple(element_values_list)]
+                debug('intermediate_result_pd_series:\n' + str(intermediate_result_pd_series))
+                debug('intermediate_result_pd_series.index:'+str(intermediate_result_pd_series.index))
+
+                #this might need to be branched depending on the function
+                sel_vec_for_pivot_table = intermediate_result_pd_series.index == df.columns[Measure_Index]
+
+                debug('sel_vec_for_pivot_table:' + str(sel_vec_for_pivot_table))
+                result_value = intermediate_result_pd_series[sel_vec_for_pivot_table][0]
+                # result_value = result_set_df[tuple(element_values_list)][result_set_df.index == df.columns[Measure_Index]]
+                debug('result_value:' + str(result_value))
+                # debug('type(result_value):'+str(type(result_value)))
+                self.memoized_values[memo_key] = result_value
+            else:
+                self.memoized_values[memo_key] = result_value
+        else:
+            debug('result_value found in memoized values')
+        debug("exit calculateDataProfileStatistic()")
+        return self.memoized_values[memo_key]
+
     def checkAbsoluteConstraint(self, Expected_Result, constraint_type, Fun, Dimension_Index_List, Element,
                                 Measure_Index, lower_bound, upper_bound, Warn_or_Fail):
         global stack_depth
@@ -795,231 +1079,9 @@ class ConstraintSet:
 
         debug("memo_key:" + str(memo_key))
         debug("")
-        dimension_column_names_list = []
-        if memo_key not in self.memoized_values.keys():
-            debug(memo_key + " not in memoized values")
+        result_value = self.calculateDataProfileStatistic(self.df,memo_key,Expected_Result, constraint_type, Fun, Dimension_Index_List, Element,
+                                Measure_Index, lower_bound, upper_bound, Warn_or_Fail)
 
-            debug("Dimension_Index_List is NaN:" + str(pd.isna(Dimension_Index_List)))
-            if not pd.isna(Dimension_Index_List):
-                for column_index in str(Dimension_Index_List).split(','):
-                    dimension_column_names_list += [self.df.columns[int(column_index)]]
-
-            debug("Element is NaN.............:"+str(pd.isna(Element)))
-            if not pd.isna(Element):
-                element_values_list = []
-                for element_value in Element.split(','):
-                    element_values_list += [element_value]
-
-            debug("Measure_Index is NaN.......:"+str(pd.isna(Measure_Index)))
-            if not pd.isna(Measure_Index):
-                debug('Measure_Index..............:' + str(Measure_Index))
-                measure_column_name = self.df.columns[Measure_Index]
-                debug('Measure Column Name........:' + str(measure_column_name))
-
-            try:
-                # is na ?
-                # Parameter Case Dimension_Index_List      Element     Measure_Index       Case Names
-                # 000            Yes                       Yes         Yes                 Absolute\Relative File Row Count, Relative Header, Relative Layout
-                # 001            Yes                       Yes         No                  Bounded Overlap, Relative Column Data Type, Relative Column Name, Absolute\Relative Column F(x)
-                # 010            Yes                       No          Yes                 Absolute Header, Absolute Layout
-                # 011            Yes                       No          No                  Absolute Column Name, Absolute Column Data Type
-                # 100            No                        No          No                  Absolute\Relative Dimension Cross Product Element Measure F(x)
-                # 101            No                        No          Yes                 Absolute\Relative Dimension Cross Product Element Row Count
-                # 110            No                        Yes         No
-                # 111            No                        Yes         Yes                 Absolute\Relative Dimension Cross Product Cardinality
-
-
-                if pd.isna(Dimension_Index_List) and pd.isna(Element) and pd.isna(Measure_Index):  #Absolute\Relative File Row Count Case, Relative Header, Relative Layout
-                    debug("Parameter Case 000")
-                    assert Fun == 'count'
-
-                    result_value = self.df.shape[0]
-
-                elif pd.isna(Dimension_Index_List) and pd.isna(Element) and not pd.isna(Measure_Index):  # Bounded Overlap, Relative Column Data Type, Relative Column Name, Absolute\Relative Column F(x)
-                    debug("Parameter Case 001")
-                    if Fun == 'cardinality':
-                        result_value = self.df.iloc[:, Measure_Index].nunique()
-                    elif Fun == 'null count':
-                        result_value = sum(self.df.iloc[:, Measure_Index].isnull())
-                    elif Fun == 'min':
-                        result_value = min(self.df.iloc[:, Measure_Index])
-                    elif Fun == 'mean':
-                        result_value = statistics.mean(self.df.iloc[:, Measure_Index])
-                    elif Fun == 'median':
-                        result_value = statistics.median(self.df.iloc[:, Measure_Index])
-                    elif Fun == 'mode':
-                        result_value = statistics.mode(self.df.iloc[:, Measure_Index])
-                    elif Fun == 'max':
-                        result_value = max(self.df.iloc[:, Measure_Index])
-                    elif Fun == 'relative column data type':
-                        result_value = -1 #todo
-                    elif Fun == 'relative column name':
-                        result_value = -1 #todo
-                    elif Fun == 'bounded overlap':
-                        result_value = -1 #todo
-                    else:
-                        pass #todo attempt literal interpretation?
-                elif pd.isna(Dimension_Index_List) and not pd.isna(Element) and pd.isna(Measure_Index):  # Absolute Header, Absolute Layout
-                    debug("Parameter Case 010")
-
-                    result_value = True
-                    result_value = len(Element.split(',')) == self.df.shape[1]
-
-                    if result_value and Fun == 'absolute header': #if the result_value is True part of this condition wasnt here
-                        for i in range(0,len(Element.split(','))): #, then the layout having too many columns would throw an exception
-                            if Element.split(',')[i] != self.df.columns[i]:
-                                result_value = False
-                    elif result_value and Fun == 'absolute layout':
-                        parent_data_type = {}
-                        parent_data_type['int64'] = 'int'
-                        parent_data_type['object'] = 'object'
-                        #todo add more data types to map
-
-                        for i in range(0,len(Element.split(','))):
-                            if parent_data_type[Element.split(',')[i]] != self.df.dtypes[i]:
-                                result_value = False
-
-                elif pd.isna(Dimension_Index_List) and not pd.isna(Element) and not pd.isna(Measure_Index):  # Absolute Column Name, Absolute Column Data Type
-                    debug("Parameter Case 011")
-                    if Fun == 'absolute column name':
-                        result_value = self.df.columns[Measure_Index] == Element
-                    elif Fun == 'absolute column data type':
-
-                        # Data type	Description
-                        # bool_	Boolean (True or False) stored as a byte
-                        # int_	Default integer type (same as C long; normally either int64 or int32)
-                        # intc	Identical to C int (normally int32 or int64)
-                        # intp	Integer used for indexing (same as C ssize_t; normally either int32 or int64)
-                        # int8	Byte (-128 to 127)
-                        # int8	Byte (-128 to 127)
-                        # int16	Integer (-32768 to 32767)
-                        # int32	Integer (-2147483648 to 2147483647)
-                        # int64	Integer (-9223372036854775808 to 9223372036854775807)
-                        # uint8	Unsigned integer (0 to 255)
-                        # uint16	Unsigned integer (0 to 65535)
-                        # uint32	Unsigned integer (0 to 4294967295)
-                        # uint64	Unsigned integer (0 to 18446744073709551615)
-                        # float_	Shorthand for float64.
-                        # float16	Half precision float: sign bit, 5 bits exponent, 10 bits mantissa
-                        # float32	Single precision float: sign bit, 8 bits exponent, 23 bits mantissa
-                        # float64	Double precision float: sign bit, 11 bits exponent, 52 bits mantissa
-                        # complex_	Shorthand for complex128.
-                        # complex64	Complex number, represented by two 32-bit floats
-                        # complex128	Complex number, represented by two 64-bit floats
-
-                        #Also
-                        # str
-
-                        debug("Evaluating absolute column data type")
-                        debug(str(self.df.dtypes[Measure_Index])+" ?= "+str(Element))
-
-                        if Element == 'bool':
-                            result_value = self.df.dtypes[Measure_Index] in ['bool']
-                        elif Element == 'int':
-                            result_value = self.df.dtypes[Measure_Index] in ['int','int32','int64','intc','intp','int8',
-                                                                             'int16','int32','int64','uint8','uint16',
-                                                                             'uint16','uint32','uint64']
-                        elif Element == 'float':
-                            result_value = self.df.dtypes[Measure_Index] in ['float','float16','float32','float64']
-                        elif Element == 'complex':
-                            result_value = self.df.dtypes[Measure_Index] in ['complex', 'complex64', 'complex128']
-                        elif Element == 'str':
-                            result_value = self.df.dtypes[Measure_Index] in ['str']
-                        elif Element == 'object':
-                            result_value = self.df.dtypes[Measure_Index] in ['object']
-
-                    else:
-                        error("Parameter combination matched Absolute Column Name/Data Type case, but Fun did not match the expected value for that case.")
-                        #todo put this as an assertion
-                        raise ValueError
-                elif not pd.isna(Dimension_Index_List) and pd.isna(Element) and pd.isna(Measure_Index):  # Dimension Cross Product Cardinality Case
-                    debug("Parameter Case 100")
-                    debug("Computing result for Absolute Dimension Cross Product Cardinality Case")
-                    assert Fun == 'cardinality'
-                    result_value = self.df.loc[:, dimension_column_names_list].drop_duplicates().shape[0]
-                elif not pd.isna(Dimension_Index_List) and pd.isna(Element) and not pd.isna(Measure_Index):  # Absolute Header, Absolute Layout
-                    debug("Parameter Case 101")
-                    if Fun == 'cardinality':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'nunique'].reset_index()
-                    elif Fun == 'mode':
-                        result_value = -1  # todo
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'min'].reset_index()
-                    elif Fun == 'min':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'min'].reset_index()
-                    elif Fun == 'mean':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'mean'].reset_index()
-                    elif Fun == 'median':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'median'].reset_index()
-                    elif Fun == 'mode':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'mode'].reset_index()
-                    elif Fun == 'max':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()
-                    else:
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()  # todo
-                elif not pd.isna(Dimension_Index_List) and not pd.isna(Element) and pd.isna(Measure_Index):  # Absolute\Relative Dimension Cross Product Element Row Count
-                    debug("Parameter Case 110")
-                    result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg['max'].reset_index() #todo this is wrong
-                elif not pd.isna(Dimension_Index_List) and not pd.isna(Element) and not pd.isna(Measure_Index):  # Absolute\Relative Dimension Cross Product Element Measure F(x)
-                    debug("Parameter Case 111")
-                    debug("Fun:"+str(Fun))
-
-                    if Fun == 'cardinality':
-                        result_set_df = pd.pivot_table(self.df, columns=dimension_column_names_list, aggfunc=lambda x: x.nunique())
-                    elif Fun == 'null count':
-                        result_set_df = pd.pivot_table(self.df, columns=dimension_column_names_list, aggfunc=lambda x: sum(x.isnull()))
-                    elif Fun == 'min':
-                        result_set_df = pd.pivot_table(self.df, columns=dimension_column_names_list, aggfunc='min')
-                    elif Fun == 'mean':
-                        result_set_df = pd.pivot_table(self.df, columns=dimension_column_names_list, aggfunc='mean')
-                    elif Fun == 'median':
-                        result_set_df = pd.pivot_table(self.df, columns=dimension_column_names_list, aggfunc='median')
-                    elif Fun == 'mode':
-                        result_set_df = pd.pivot_table(self.df, columns=dimension_column_names_list, aggfunc='mode') #todo need to use a different mode function
-                    elif Fun == 'max':
-                        result_set_df = pd.pivot_table(self.df, columns=dimension_column_names_list, aggfunc='max')
-                    else:
-                        pass  # todo attempt literal interpretation?
-                else:
-                    debug("Unmapped parameter combination ZZZ")
-                    debug('Dimension_Index_List:' + str(pd.isna(Dimension_Index_List)))
-                    debug('Element:' + str(pd.isna(Element)))
-                    debug('Measure_Index:' + str(pd.isna(Measure_Index)))
-                    debug('Fun:' + str(Fun))
-                    result_value = -1  # todo
-
-            except Exception as e:
-                if Expected_Result == 'ERR':
-                    stack_depth -= 1
-                    debug("EXIT checkAbsoluteConstraint()")
-                    return 0
-                debug(e)
-                stack_depth -= 1
-                debug("EXIT checkAbsoluteConstraint()")
-                return -1
-
-            # selecting the Dimension_Cross_Product_Element row from the pivot table output by the aggregation
-            if len(dimension_column_names_list) > 0 and not pd.isna(Element):
-                #debug('result_set_df:\n'+str(result_set_df))
-                intermediate_result_pd_series = result_set_df[tuple(element_values_list)]
-                sel_vec_for_pivot_table = intermediate_result_pd_series.index == self.df.columns[Measure_Index]
-                debug('sel_vec_for_pivot_table:'+str(sel_vec_for_pivot_table))
-                result_value = intermediate_result_pd_series[sel_vec_for_pivot_table][0]
-                #result_value = result_set_df[tuple(element_values_list)][result_set_df.index == self.df.columns[Measure_Index]]
-                debug('result_value:'+str(result_value))
-                #debug('type(result_value):'+str(type(result_value)))
-                self.memoized_values[memo_key] = result_value
-            else:
-                self.memoized_values[memo_key] = result_value
-        else:
-            debug('result_value found in memoized values')
         debug('SET result_value = ' + str(self.memoized_values[memo_key]))
 
         # value is memoized
@@ -1081,373 +1143,75 @@ class ConstraintSet:
               str(Dimension_Index_List).ljust(22) + str(Element).ljust(10) + str(Measure_Index).ljust(15) + \
               str(lower_bound).ljust(13) + str(upper_bound).ljust(13) + str(Warn_or_Fail).ljust(13))
 
-        memo_key = 'Primary ' + str(Dimension_Index_List) + ' ' + str(Element) + ' ' + str(Measure_Index) + ' ' + str(
-            Fun)
-        primary_memo_key = memo_key
+        if constraint_type == 'bounded overlap':
+            memo_key = 'Bounded Overlap ' + str( Measure_Index)
+            debug("Attempting to compute column overlap")
+            debug("pd.merge(self.df,self.relative_df, 'inner', on=list(self.df.columns[Measure_Index]))")
+            debug('pd.merge(self.df,self.relative_df, inner, on=self.df.columns[Measure_Index]):'+str(pd.merge(self.df.iloc[:,Measure_Index],self.relative_df.iloc[:,Measure_Index], 'inner') ) )
+            debug('str(pd.merge(self.df.iloc[:,Measure_Index],self.relative_df.iloc[:,Measure_Index], inner)):'+str(pd.merge(self.df.iloc[:,Measure_Index],self.relative_df.iloc[:,Measure_Index], 'inner') ) )
+            debug('intersection.shape[0]:'+str(pd.merge(self.df.iloc[:,Measure_Index],self.relative_df.iloc[:,Measure_Index], 'inner').shape[0]))
+            initial_result_value = pd.merge(self.df.iloc[:,Measure_Index],self.relative_df.iloc[:,Measure_Index], 'inner').shape[0] / self.df.shape[0]
+            self.memoized_values[memo_key] = initial_result_value
+            debug('SET result_value = ' + str(self.memoized_values[memo_key]))
 
-        dimension_column_names_list = []
-        if memo_key not in self.memoized_values.keys():
-            debug(memo_key + " not in memoized values")
+            result_value = (float(lower_bound) <= initial_result_value and initial_result_value <= float(upper_bound))
 
-            debug("Dimension_Index_List is NaN:" + str(pd.isna(Dimension_Index_List)))
-            if not pd.isna(Dimension_Index_List):
-                for column_index in str(Dimension_Index_List).split(','):
-                    dimension_column_names_list += [self.df.columns[int(column_index)]]
+        else:
+            memo_key = 'Primary ' + str(Dimension_Index_List) + ' ' + str(Element) + ' ' + str(Measure_Index) + ' ' + str(
+                Fun)
+            primary_memo_key = memo_key
 
-            debug("Element is NaN.............:" + str(pd.isna(Element)))
-            if not pd.isna(Element):
-                element_values_list = []
-                for element_value in Element.split(','):
-                    element_values_list += [element_value]
+            result_value = self.calculateDataProfileStatistic(self.df,memo_key, Expected_Result, constraint_type, Fun,
+                                                              Dimension_Index_List, Element,
+                                                              Measure_Index, lower_bound, upper_bound, Warn_or_Fail)
 
-            debug("Measure_Index is NaN.......:" + str(pd.isna(Measure_Index)))
-            if not pd.isna(Measure_Index):
-                debug('Measure_Index..............:' + str(Measure_Index))
-                measure_column_name = self.df.columns[Measure_Index]
-                debug('Measure Column Name........:' + str(measure_column_name))
+            debug('SET primary_result_value = ' + str(self.memoized_values[memo_key]))
 
+            memo_key = 'Secondary ' + str(Dimension_Index_List) + ' ' + str(Element) + ' ' + str(Measure_Index) + ' ' + str(
+                Fun)
+            secondary_memo_key = memo_key
+
+            debug("memo_key:" + str(memo_key))
+            result_value = self.calculateDataProfileStatistic(self.relative_df,memo_key, Expected_Result, constraint_type, Fun,
+                                                              Dimension_Index_List, Element,
+                                                              Measure_Index, lower_bound, upper_bound, Warn_or_Fail)
+            debug('SET secondary_result_value = ' + str(self.memoized_values[memo_key]))
+
+        if constraint_type != 'relative layout' and constraint_type != 'relative header' and constraint_type != 'bounded overlap' \
+                and constraint_type != 'relative column data type' and constraint_type != 'relative column name':
             try:
-                if pd.isna(Dimension_Index_List) and pd.isna(Element) and pd.isna(
-                        Measure_Index):  # Absolute\Relative File Row Count Case
-                    assert Fun == 'count'
-                    debug("Computing result for File Row Count Case")
-                    result_value = self.df.shape[0]
+                initial_result_value = int(self.memoized_values[primary_memo_key]) / int(self.memoized_values[secondary_memo_key])
+            except ZeroDivisionError:
+                initial_result_value = float('inf')
 
-                elif pd.isna(Dimension_Index_List) and pd.isna(Element) and not pd.isna(
-                        Measure_Index):  # Bounded Overlap, Relative Column Data Type, Relative Column Name, Absolute\Relative Column F(x)
-                    if Fun == 'cardinality':
-                        result_value = self.df.iloc[:, Measure_Index].nunique()
-                    elif Fun == 'null count':
-                        result_value = sum(self.df.iloc[:, Measure_Index].isnull())
-                    elif Fun == 'min':
-                        result_value = min(self.df.iloc[:, Measure_Index])
-                    elif Fun == 'mean':
-                        result_value = statistics.mean(self.df.iloc[:, Measure_Index])
-                    elif Fun == 'median':
-                        result_value = statistics.median(self.df.iloc[:, Measure_Index])
-                    elif Fun == 'mode':
-                        result_value = statistics.mode(self.df.iloc[:, Measure_Index])
-                    elif Fun == 'max':
-                        result_value = max(self.df.iloc[:, Measure_Index])
-                    elif Fun == 'relative column data type':
-                        result_value = -1  # todo
-                    elif Fun == 'relative column name':
-                        result_value = -1  # todo
-                    elif Fun == 'bounded overlap':
-                        result_value = -1  # todo
-                    else:
-                        pass  # todo attempt literal interpretation?
-                elif pd.isna(Dimension_Index_List) and not pd.isna(Element) and not pd.isna(
-                        Measure_Index):  # Absolute Column Name, Absolute Column Data Type
-                    if Fun == 'absolute column name':
-                        result_value = -1  # todo
-                    elif Fun == 'absolute column data type':
-                        result_value = -1  # todo
-                    else:
-                        error(
-                            "Parameter combination matched Absolute Column Name/Data Type case, but Fun did not match the expected value for that case.")
-                        # todo put this as an assertion
-                        raise ValueError
-                elif not pd.isna(Dimension_Index_List) and not pd.isna(Element) and not pd.isna(
-                        Measure_Index):  # Absolute\Relative Dimension Cross Product Element Measure F(x)
-                    if Fun == 'cardinality':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()  # todo this is wrong
-                    elif Fun == 'null count':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()  # todo this is wrong
-                    elif Fun == 'min':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()  # todo this is wrong
-                    elif Fun == 'mean':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()  # todo this is wrong
-                    elif Fun == 'median':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()  # todo this is wrong
-                    elif Fun == 'mode':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()  # todo this is wrong
-                    elif Fun == 'max':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()  # todo this is wrong
-                    else:
-                        pass  # todo attempt literal interpretation?
-                elif not pd.isna(Dimension_Index_List) and not pd.isna(Element) and pd.isna(
-                        Measure_Index):  # Absolute\Relative Dimension Cross Product Element Row Count
-                    result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                        'max'].reset_index()  # todo this is wrong
-                elif not pd.isna(Dimension_Index_List) and pd.isna(Element) and not pd.isna(
-                        Measure_Index):  # Absolute Header, Absolute Layout
-                    if Fun == 'cardinality':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'nunique'].reset_index()
-                    elif Fun == 'mode':
-                        result_value = -1  # todo
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'min'].reset_index()
-                    elif Fun == 'min':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'min'].reset_index()
-                    elif Fun == 'mean':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'mean'].reset_index()
-                    elif Fun == 'median':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'median'].reset_index()
-                    elif Fun == 'mode':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'mode'].reset_index()
-                    elif Fun == 'max':
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()
-                    else:
-                        result_set_df = self.df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()  # todo
-                elif not pd.isna(Dimension_Index_List) and pd.isna(Element) and pd.isna(
-                        Measure_Index):  # Dimension Cross Product Cardinality Case
-                    debug("Computing result for Absolute Dimension Cross Product Cardinality Case")
-                    result_value = self.df.loc[:, dimension_column_names_list].drop_duplicates().shape[0]
+            initial_result = (float(lower_bound) <= initial_result_value and initial_result_value <= float(upper_bound))
+            debug("RESULT: " + str(initial_result))
+            if Expected_Result == 'PASS':
+                debug("CHECKING IS TRUE: " + str(lower_bound) + " <= " + str(initial_result_value) + " <= " + str(
+                    upper_bound))
+            elif Expected_Result == 'FAIL':
+                debug("CHECKING IS FALSE: " + str(lower_bound) + " <= " + str(initial_result_value) + " <= " + str(
+                    upper_bound))
+        elif constraint_type == 'bounded overlap':
+            initial_result = (float(lower_bound) <= initial_result_value and initial_result_value <= float(upper_bound))
+            debug("RESULT: " + str(initial_result))
+            if Expected_Result == 'PASS':
+                debug("CHECKING IS TRUE: " + str(lower_bound) + " <= " + str(initial_result_value) + " <= " + str(
+                    upper_bound))
+            elif Expected_Result == 'FAIL':
+                debug("CHECKING IS FALSE: " + str(lower_bound) + " <= " + str(initial_result_value) + " <= " + str(
+                    upper_bound))
+        else:
+            initial_result_value = self.memoized_values[primary_memo_key] == self.memoized_values[secondary_memo_key]
 
-                    assert Fun == 'cardinality'
-                else:
-                    debug("Unmapped parameter combination ZZZ")
-                    debug('Dimension_Index_List:' + str(pd.isna(Dimension_Index_List)))
-                    debug('Element:' + str(pd.isna(Element)))
-                    debug('Measure_Index:' + str(pd.isna(Measure_Index)))
-                    debug('Fun:' + str(Fun))
-                    result_value = -1  # todo
+            if Expected_Result == 'PASS':
+                debug("CHECKING IS TRUE: " + str(initial_result_value))
+                initial_result = initial_result_value is True
+            elif Expected_Result == 'FAIL':
+                debug("CHECKING IS FALSE: " + str(initial_result_value))
+                initial_result = initial_result_value is False
 
-            except Exception as e:
-                if Expected_Result == 'ERR':
-                    stack_depth -= 1
-                    debug("EXIT checkAbsoluteConstraint()")
-                    return 0
-                debug(e)
-                stack_depth -= 1
-                debug("EXIT checkAbsoluteConstraint()")
-                return -1
 
-            # selecting the Dimension_Cross_Product_Element row from the pivot table output by the aggregation
-            if len(dimension_column_names_list) > 0 and not pd.isna(Element):
-                for i in range(0, len(dimension_column_names_list)):
-                    debug("iterating sel vec. current column:" + str(dimension_column_names_list[i]))
-                    debug("whole list:" + str(dimension_column_names_list))
-                    if i == 0:
-                        sel_vec = result_set_df.loc[
-                            result_set_df[dimension_column_names_list[i]] == element_values_list[i]]
-                    else:
-                        sel_vec = sel_vec & (
-                            result_set_df.loc[result_set_df[dimension_column_names_list[i]] == element_values_list[i]])
-                    debug("....sel_vec:" + str(sel_vec))
-
-                debug("A")
-                debug("RECORDING MEMOIZED VALUE:")
-                debug("B")
-                debug("memo_key".ljust(15, '.') + ":" + str(memo_key))
-                debug("C")
-                result_value = result_set_df.iloc[sel_vec, len(result_set_df.columns) - 1]
-                debug("result_value".ljust(15, '.') + ":" + str(result_value))
-            else:
-                debug("D")
-                debug("RECORDING MEMOIZED VALUE:")
-                debug("memo_key".ljust(15, '.') + ":" + str(memo_key))
-                debug("E")
-                debug("result_value".ljust(15, '.') + ":" + str(result_value))
-                debug("F")
-                self.memoized_values[memo_key] = result_value
-                debug("G")
-
-        memo_key = 'Secondary ' + str(Dimension_Index_List) + ' ' + str(Element) + ' ' + str(Measure_Index) + ' ' + str(
-            Fun)
-        secondary_memo_key = memo_key
-
-        debug("memo_key:" + str(memo_key))
-
-        dimension_column_names_list = []
-        if memo_key not in self.memoized_values.keys():
-            debug(memo_key + " not in memoized values")
-
-            debug("Dimension_Index_List is NaN:" + str(pd.isna(Dimension_Index_List)))
-            if not pd.isna(Dimension_Index_List):
-                for column_index in str(Dimension_Index_List).split(','):
-                    dimension_column_names_list += [self.df.columns[int(column_index)]]
-
-            debug("Element is NaN.............:" + str(pd.isna(Element)))
-            if not pd.isna(Element):
-                element_values_list = []
-                for element_value in Element.split(','):
-                    element_values_list += [element_value]
-
-            debug("Measure_Index is NaN.......:" + str(pd.isna(Measure_Index)))
-            if not pd.isna(Measure_Index):
-                debug('Measure_Index..............:' + str(Measure_Index))
-                measure_column_name = self.df.columns[Measure_Index]
-                debug('Measure Column Name........:' + str(measure_column_name))
-
-            try:
-                if pd.isna(Dimension_Index_List) and pd.isna(Element) and pd.isna(
-                        Measure_Index):  # Absolute\Relative File Row Count Case
-                    assert Fun == 'count'
-                    debug("Computing result for File Row Count Case")
-                    result_value = self.relative_df.shape[0]
-
-                elif pd.isna(Dimension_Index_List) and pd.isna(Element) and not pd.isna(
-                        Measure_Index):  # Bounded Overlap, Relative Column Data Type, Relative Column Name, Absolute\Relative Column F(x)
-                    if Fun == 'cardinality':
-                        result_value = self.relative_df.iloc[:, Measure_Index].nunique()
-                    elif Fun == 'null count':
-                        result_value = sum(self.relative_df.iloc[:, Measure_Index].isnull())
-                    elif Fun == 'min':
-                        result_value = min(self.relative_df.iloc[:, Measure_Index])
-                    elif Fun == 'mean':
-                        result_value = statistics.mean(self.relative_df.iloc[:, Measure_Index])
-                    elif Fun == 'median':
-                        result_value = statistics.median(self.relative_df.iloc[:, Measure_Index])
-                    elif Fun == 'mode':
-                        result_value = statistics.mode(self.relative_df.iloc[:, Measure_Index])
-                    elif Fun == 'max':
-                        result_value = max(self.relative_df.iloc[:, Measure_Index])
-                    elif Fun == 'relative column data type':
-                        result_value = -1  # todo
-                    elif Fun == 'relative column name':
-                        result_value = -1  # todo
-                    elif Fun == 'bounded overlap':
-                        result_value = -1  # todo
-                    else:
-                        pass  # todo attempt literal interpretation?
-                elif pd.isna(Dimension_Index_List) and not pd.isna(Element) and not pd.isna(
-                        Measure_Index):  # Absolute Column Name, Absolute Column Data Type
-                    if Fun == 'absolute column name':
-                        result_value = -1  # todo
-                    elif Fun == 'absolute column data type':
-                        result_value = -1  # todo
-                    else:
-                        error(
-                            "Parameter combination matched Absolute Column Name/Data Type case, but Fun did not match the expected value for that case.")
-                        # todo put this as an assertion
-                        raise ValueError
-                elif not pd.isna(Dimension_Index_List) and not pd.isna(Element) and not pd.isna(
-                        Measure_Index):  # Absolute\Relative Dimension Cross Product Element Measure F(x)
-                    if Fun == 'cardinality':
-                        result_set_df = self.relative_df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()  # todo this is wrong
-                    elif Fun == 'null count':
-                        result_set_df = self.relative_df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()  # todo this is wrong
-                    elif Fun == 'min':
-                        result_set_df = self.relative_df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()  # todo this is wrong
-                    elif Fun == 'mean':
-                        result_set_df = self.relative_df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()  # todo this is wrong
-                    elif Fun == 'median':
-                        result_set_df = self.relative_df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()  # todo this is wrong
-                    elif Fun == 'mode':
-                        result_set_df = self.relative_df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()  # todo this is wrong
-                    elif Fun == 'max':
-                        result_set_df = self.relative_df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()  # todo this is wrong
-                    else:
-                        pass  # todo attempt literal interpretation?
-                elif not pd.isna(Dimension_Index_List) and not pd.isna(Element) and pd.isna(
-                        Measure_Index):  # Absolute\Relative Dimension Cross Product Element Row Count
-                    result_set_df = self.relative_df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                        'max'].reset_index()  # todo this is wrong
-                elif not pd.isna(Dimension_Index_List) and pd.isna(Element) and not pd.isna(
-                        Measure_Index):  # Absolute Header, Absolute Layout
-                    if Fun == 'cardinality':
-                        result_set_df = self.relative_df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'nunique'].reset_index()
-                    elif Fun == 'mode':
-                        result_value = -1  # todo
-                        result_set_df = self.relative_df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'min'].reset_index()
-                    elif Fun == 'min':
-                        result_set_df = self.relative_df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'min'].reset_index()
-                    elif Fun == 'mean':
-                        result_set_df = self.relative_df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'mean'].reset_index()
-                    elif Fun == 'median':
-                        result_set_df = self.relative_df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'median'].reset_index()
-                    elif Fun == 'mode':
-                        result_set_df = self.relative_df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'mode'].reset_index()
-                    elif Fun == 'max':
-                        result_set_df = self.relative_df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()
-                    else:
-                        result_set_df = self.relative_df.groupby(dimension_column_names_list)[measure_column_name].agg[
-                            'max'].reset_index()  # todo
-                elif not pd.isna(Dimension_Index_List) and pd.isna(Element) and pd.isna(
-                        Measure_Index):  # Dimension Cross Product Cardinality Case
-                    debug("Computing result for Absolute Dimension Cross Product Cardinality Case")
-                    result_value = self.relative_df.loc[:, dimension_column_names_list].drop_duplicates().shape[0]
-
-                    assert Fun == 'cardinality'
-                else:
-                    debug("Unmapped parameter combination ZZZ")
-                    debug('Dimension_Index_List:' + str(pd.isna(Dimension_Index_List)))
-                    debug('Element:' + str(pd.isna(Element)))
-                    debug('Measure_Index:' + str(pd.isna(Measure_Index)))
-                    debug('Fun:' + str(Fun))
-                    result_value = -1  # todo
-
-            except Exception as e:
-                if Expected_Result == 'ERR':
-                    stack_depth -= 1
-                    debug("EXIT checkAbsoluteConstraint()")
-                    return 0
-                debug(e)
-                stack_depth -= 1
-                debug("EXIT checkAbsoluteConstraint()")
-                return -1
-
-            # selecting the Dimension_Cross_Product_Element row from the pivot table output by the aggregation
-            if len(dimension_column_names_list) > 0 and not pd.isna(Element):
-                for i in range(0, len(dimension_column_names_list)):
-                    debug("iterating sel vec. current column:" + str(dimension_column_names_list[i]))
-                    debug("whole list:" + str(dimension_column_names_list))
-                    if i == 0:
-                        sel_vec = result_set_df.loc[
-                            result_set_df[dimension_column_names_list[i]] == element_values_list[i]]
-                    else:
-                        sel_vec = sel_vec & (
-                            result_set_df.loc[result_set_df[dimension_column_names_list[i]] == element_values_list[i]])
-                    debug("....sel_vec:" + str(sel_vec))
-
-                debug("A")
-                debug("RECORDING MEMOIZED VALUE:")
-                debug("B")
-                debug("memo_key".ljust(15, '.') + ":" + str(memo_key))
-                debug("C")
-                result_value = result_set_df[sel_vec, len(result_set_df.columns) - 1]
-                debug("result_value".ljust(15, '.') + ":" + str(result_value))
-            else:
-                debug("D")
-                debug("RECORDING MEMOIZED VALUE:")
-                debug("memo_key".ljust(15, '.') + ":" + str(memo_key))
-                debug("E")
-                debug("result_value".ljust(15, '.') + ":" + str(result_value))
-                debug("F")
-                self.memoized_values[memo_key] = result_value
-                debug("G")
-
-        try:
-            initial_result_value = int(self.memoized_values[primary_memo_key]) / int(self.memoized_values[secondary_memo_key])
-        except ZeroDivisionError:
-            initial_result_value = float('inf')
-
-        initial_result = (float(lower_bound) <= initial_result_value and initial_result_value <= float(upper_bound))
-        debug("RESULT: " + str(initial_result))
-        if Expected_Result == 'PASS':
-            debug("CHECKING IS TRUE: " + str(lower_bound) + " <= " + str(initial_result_value) + " <= " + str(upper_bound))
-        elif Expected_Result == 'FAIL':
-            debug("CHECKING IS FALSE: " + str(lower_bound) + " <= " + str(initial_result_value) + " <= " + str(upper_bound))
 
         if ( initial_result and Expected_Result == 'PASS') or ( not initial_result and Expected_Result == 'FAIL'):
             stack_depth -= 1
@@ -1526,7 +1290,8 @@ class ConstraintSet:
                                                        input__upper_bound,
                                                        input__warn_or_fail)
 
-        elif 'relative' in current_constraint["constraint_type"].lower():
+        elif 'relative' in current_constraint["constraint_type"].lower() \
+                or 'bounded overlap' == current_constraint["constraint_type"].lower():
             debug("Checking relative constraint")
             test_result = self.checkRelativeConstraint(input__expected_result,
                                                        input__constraint_type,
@@ -1537,9 +1302,6 @@ class ConstraintSet:
                                                        input__lower_bound,
                                                        input__upper_bound,
                                                        input__warn_or_fail)
-
-        elif current_constraint["constraint_type"] == "Bounded Overlap":
-            pass  # todo
 
         elif current_constraint["constraint_type"] == "Column Data Type":
             # test_result = self.checkColumnDataTypeConstraint(current_args["column_name"],current_args["data_type"], current_args['warn_or_fail'])
