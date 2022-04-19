@@ -16,6 +16,7 @@ stack_depth = 0
 global print_logs
 print_logs = True
 
+#todo add self.testResults[constraint_id] to the check methods instead of just CheakAll
 
 # if you want to add new log levels: https://stackoverflow.com/questions/2183233/how-to-add-a-custom-loglevel-to-pythons-logging-facility
 
@@ -1388,6 +1389,10 @@ class ConstraintSet:
     def writeResultsToCSV(self, path):
         result_df = pd.DataFrame(columns=["constraint_id", 'constraint_name', 'result'])
         for constraint_id in self.constraint_id_to_args_dict_map.keys():
+            debug("self.constraint_id_to_args_dict_map[constraint_id][args][constraint_name]:"+str(self.constraint_id_to_args_dict_map[constraint_id]['args'][
+                                                       'constraint_name']))
+            debug("self.test_results:"+str(self.test_results))
+            debug("self.test_results[constraint_id]:"+str(self.test_results[constraint_id]))
             result_df.loc[len(result_df.index)] = [constraint_id,
                                                    self.constraint_id_to_args_dict_map[constraint_id]['args'][
                                                        'constraint_name'], self.test_results[constraint_id]]
