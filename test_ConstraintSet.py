@@ -49,7 +49,7 @@ class TestConstraintSet(TestCase):
         debug("ENTER test_toString()")
         stack_depth += 1
 
-        result = str(self)
+        result = str(self.test_set_definitions[1])
 
         debug("ASSERT test_toString()")
         stack_depth -= 1
@@ -68,17 +68,17 @@ class TestConstraintSet(TestCase):
         self.assertEqual(1,1) #todo hard code correct result to assert for test_showResults()
         debug("PASSED test_showResults()")
 
-    # def test_writeResultsToCSV(self):
-    #     global stack_depth
-    #     global print_logs
-    #     debug("ENTER test_writeResultsToCSV()")
-    #     stack_depth += 1
-    #
-    #     self.test_set_definitions[list(self.test_set_definitions.keys())[0]].writeResultsToCSV('C:/sandbox/data/output/Data_Profile_Tester/')
-    #     debug("ASSERT test_writeResultsToCSV()")
-    #     stack_depth -= 1
-    #     self.assertEqual(1, 1)  # todo hard code correct result to assert for test_showResults()
-    #     debug("PASSED test_writeResultsToCSV()")
+    def test_writeResultsToCSV(self):
+        global stack_depth
+        global print_logs
+        debug("ENTER test_writeResultsToCSV()")
+        stack_depth += 1
+
+        self.test_set_definitions[list(self.test_set_definitions.keys())[0]].writeResultsToCSV('C:/sandbox/data/output/Data_Profile_Tester/')
+        debug("ASSERT test_writeResultsToCSV()")
+        stack_depth -= 1
+        self.assertEqual(1, 1)  # todo hard code correct result to assert for test_showResults()
+        debug("PASSED test_writeResultsToCSV()")
 
     #@unittest.skip('Already passed')
     def test_expected_errors(self):

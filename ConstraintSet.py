@@ -762,12 +762,6 @@ class ConstraintSet:
             debug(str(constraint_id))
             self.test_results[constraint_id] = self.checkConstraintById(constraint_id)
 
-        if printResults:
-            self.showResults()
-
-        if outputFolder is not None:
-            self.writeResultsToCSV(outputFolder + '//Data_Profile_Test_Results_' + datetime.datetime.now().strftime(
-                "%Y%m%d_%H%M%S") + '.txt')
         stack_depth -= 1
         debug("EXIT checkAllConstraints")
 
@@ -1047,7 +1041,7 @@ class ConstraintSet:
         debug("exit calculateDataProfileStatistic()")
         return self.memoized_values[memo_key]
 
-    def checkAbsoluteConstraint(self, Expected_Result, constraint_type, Fun, Dimension_Index_List, Element,
+    def checkAbsoluteConstraint(self,constraint_id, Expected_Result, constraint_type, Fun, Dimension_Index_List, Element,
                                 Measure_Index, lower_bound, upper_bound, Warn_or_Fail):
         global stack_depth
         global print_logs
@@ -1105,17 +1099,13 @@ class ConstraintSet:
         debug('Expected_Result == PASS:'+str(Expected_Result == 'PASS'))
         debug('Expected_Result == FAIL:' + str(Expected_Result == 'FAIL'))
         if ( initial_result and Expected_Result == 'PASS') or ( not initial_result and Expected_Result == 'FAIL'):
-            stack_depth -= 1
-            debug("EXIT checkAbsoluteConstraint()")
-            return 0
+            return_value = 0
         elif Warn_or_Fail == 0:
-            warning(
-                "Warning in checkAbsoluteConstraint")  # todo make more specific
+            warning("Warning in checkAbsoluteConstraint")  # todo make more specific
+            return_value = 1
         elif Warn_or_Fail == 1:
             error("Error in checkAbsoluteConstraint")  # todo make more specific
-            stack_depth -= 1
-            debug("EXIT checkAbsoluteConstraint()")
-            return 1
+            return_value = 1
         else:
             error("Unmapped constraint results")
             error("initial_result:"+str(initial_result))
@@ -1123,13 +1113,15 @@ class ConstraintSet:
             error("Warn_or_Fail:" + str(Warn_or_Fail))
             stack_depth -= 1
             debug("EXIT checkAbsoluteConstraint()")
+            return_value = 1
             raise ValueError
-            return 1
+            #return 1
         stack_depth -= 1
         debug("EXIT checkAbsoluteConstraint()")
-        return 1
+        self.test_results[constraint_id] = return_value
+        return return_value
 
-    def checkRelativeConstraint(self, Expected_Result, constraint_type, Fun, Dimension_Index_List, Element,
+    def checkRelativeConstraint(self,Constraint_Id, Expected_Result, constraint_type, Fun, Dimension_Index_List, Element,
                                 Measure_Index, lower_bound, upper_bound, Warn_or_Fail):
         global stack_depth
         global print_logs
@@ -1210,26 +1202,23 @@ class ConstraintSet:
 
 
         if ( initial_result and Expected_Result == 'PASS') or ( not initial_result and Expected_Result == 'FAIL'):
-            stack_depth -= 1
-            debug("EXIT checkRelativeConstraint()")
-            return 0
+            return_value = 0
         elif Warn_or_Fail == 0:
             warning("Warning in checkRelativeConstraint")  # todo make more specific
+            return_value = 1
         elif Warn_or_Fail == 1:
             error("Error in checkRelativeConstraint")  # todo make more specific
-            stack_depth -= 1
-            debug("EXIT checkRelativeConstraint()")
-            return 1
+            return_value = 1
         else:
-            error(''.ljust(stack_depth * 2,
-                           '.') + "what is happening in checkRelativeConstraint()")  # todo make more specific
+            error("what is happening in checkRelativeConstraint()")  # todo make more specific
             stack_depth -= 1
             debug("EXIT checkRelativeConstraint()")
             raise ValueError
             return 1
         stack_depth -= 1
         debug("EXIT checkRelativeConstraint()")
-        return 1
+        self.test_results[Constraint_Id] = return_value
+        return return_value
 
     def checkConstraintById(self, constraint_id):
         global stack_depth
@@ -1276,7 +1265,8 @@ class ConstraintSet:
 
         if 'absolute' in current_constraint["constraint_type"].lower():
             debug("Checking absolute constraint")
-            test_result = self.checkAbsoluteConstraint(input__expected_result,
+            test_result = self.checkAbsoluteConstraint(constraint_id,
+                                                       input__expected_result,
                                                        input__constraint_type,
                                                        input__fun,
                                                        input__dimension_index_list,
@@ -1289,7 +1279,8 @@ class ConstraintSet:
         elif 'relative' in current_constraint["constraint_type"].lower() \
                 or 'bounded overlap' == current_constraint["constraint_type"].lower():
             debug("Checking relative constraint")
-            test_result = self.checkRelativeConstraint(input__expected_result,
+            test_result = self.checkRelativeConstraint(constraint_id,
+                                                       input__expected_result,
                                                        input__constraint_type,
                                                        input__fun,
                                                        input__dimension_index_list,
@@ -1388,16 +1379,12 @@ class ConstraintSet:
 
     def writeResultsToCSV(self, path):
         result_df = pd.DataFrame(columns=["constraint_id", 'constraint_name', 'result'])
-        for constraint_id in self.constraint_id_to_args_dict_map.keys():
-            debug("self.constraint_id_to_args_dict_map[constraint_id][args][constraint_name]:"+str(self.constraint_id_to_args_dict_map[constraint_id]['args'][
-                                                       'constraint_name']))
-            debug("self.test_results:"+str(self.test_results))
-            debug("self.test_results[constraint_id]:"+str(self.test_results[constraint_id]))
+        for constraint_id in self.test_results.keys():
             result_df.loc[len(result_df.index)] = [constraint_id,
                                                    self.constraint_id_to_args_dict_map[constraint_id]['args'][
                                                        'constraint_name'], self.test_results[constraint_id]]
 
-        with open(path, 'w') as f:
+        with open(path + '//Data_Profile_Test_Results_' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S") + '.txt', 'w') as f:
             writer = csv.writer(f)
 
             writer.writerow(['constraint_id', 'constraint_name', 'result'])
