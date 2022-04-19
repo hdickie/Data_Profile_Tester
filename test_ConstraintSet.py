@@ -1,7 +1,7 @@
 import unittest
 from unittest import TestCase
 from ConstraintSet import create_test_constraint_sets_map_from_xlsx
-from ConstraintSet import debug, error, warning, info, critical
+from ConstraintSet import debug, error, info
 import sys, traceback
 
 global stack_depth
@@ -43,6 +43,19 @@ class TestConstraintSet(TestCase):
 
     #todo it would be good to have a test_expected_errors_method that those errors dont contaminate results for expected successes
 
+    def test_checkAllConstraints(self):
+        global stack_depth
+        global print_logs
+        debug("ENTER test_checkAllConstraints()")
+        stack_depth += 1
+
+        result = self.test_set_definitions[1].checkAllConstraints()
+
+        debug("ASSERT test_toString()")
+        stack_depth -= 1
+        self.assertEqual(1, 1)  # todo hard code correct result to assert for test_checkAllConstraints()
+        debug("PASSED test_checkAllConstraints()")
+
     def test_toString(self):
         global stack_depth
         global print_logs
@@ -80,7 +93,7 @@ class TestConstraintSet(TestCase):
         self.assertEqual(1, 1)  # todo hard code correct result to assert for test_showResults()
         debug("PASSED test_writeResultsToCSV()")
 
-    #@unittest.skip('Already passed')
+    @unittest.skip('Already passed')
     def test_expected_errors(self):
         global stack_depth
         global print_logs

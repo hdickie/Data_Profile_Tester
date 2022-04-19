@@ -38,11 +38,11 @@ def info(obj):
 def warning(obj):
     if print_logs:
         logging.warning(''.ljust(stack_depth * 2, '.') + str(obj))
-
-
-def critical(obj):
-    if print_logs:
-        logging.critical(''.ljust(stack_depth * 2, '.') + str(obj))
+#
+#
+# def critical(obj):
+#     if print_logs:
+#         logging.critical(''.ljust(stack_depth * 2, '.') + str(obj))
 
 
 def create_test_constraint_sets_map_from_xlsx(xlsx_path):
@@ -117,20 +117,16 @@ def create_test_constraint_sets_map_from_xlsx(xlsx_path):
         if pd.isna(Constraint_Set_Id):
             continue
 
-        try:
-            constraint_set_id_to_Constraint_Set_Object_map[Constraint_Set_Id].addConstraint(Constraint_Name,
-                                                                                            Expected_Result,
-                                                                                            constraint_type,
-                                                                                            Dimension_Index_List,
-                                                                                            Element,
-                                                                                            Measure_Index,
-                                                                                            lower_bound,
-                                                                                            upper_bound,
-                                                                                            Warn_or_Fail)
-        except Exception as e:
-            error(e)
-            stack_depth -= 1
-            raise e
+
+        constraint_set_id_to_Constraint_Set_Object_map[Constraint_Set_Id].addConstraint(Constraint_Name,
+                                                                                        Expected_Result,
+                                                                                        constraint_type,
+                                                                                        Dimension_Index_List,
+                                                                                        Element,
+                                                                                        Measure_Index,
+                                                                                        lower_bound,
+                                                                                        upper_bound,
+                                                                                        Warn_or_Fail)
 
     stack_depth -= 1
     debug("EXIT create_test_constraint_sets_map_from_xlsx()")
@@ -237,10 +233,10 @@ class ConstraintSet:
             error_flag = False
 
             #Generic Validation
-            if lower_bound == 'inf':
+            if str(upper_bound).lower() == 'inf':
                 lower_bound = float('inf')
 
-            if upper_bound == 'inf':
+            if str(upper_bound).lower() == 'inf':
                 upper_bound = float('inf')
 
             if not pd.isna(lower_bound):
@@ -423,22 +419,36 @@ class ConstraintSet:
                     or constraint_type.lower().strip() == 'relative dimension cross product element measure mode' \
                     or constraint_type.lower().strip() == 'relative dimension cross product element measure max':
 
-                # if element is defined, then Dimension_Index_List must also be defined, and they must have the same rank
-                if not pd.isna(Element):
+                try:
+                    float(min(self.df.iloc[:, Measure_Index]))
+                except:
+                    error_flag = True
+                    error_msg += "Measure column in primary df failed cast to float.\n"
+
+                if 'relative' in constraint_type.lower():
                     try:
-                        assert len(Dimension_Index_List.split(',')) == len(Element.split(','))
+                        float(min(self.relative_df.iloc[:,Measure_Index]))
                     except:
                         error_flag = True
-                        error_msg += "Dimension_Index_List and Element have different rank, which is an invalid test configuration.\n"
+                        error_msg += "Measure column in relative df failed cast to float.\n"
+
 
                 # Parameters that should be defined
                 if pd.isna(Dimension_Index_List):
                     error_flag = True
                     error_msg += "Expected not N/A for Dimension_Index_List, but got N/A.\n"
 
+                try:
+                    assert len(Dimension_Index_List.split(',')) == len(Element.split(','))
+                except:
+                    error_flag = True
+                    error_msg += "Dimension_Index_List and Element have different rank, which is an invalid test configuration.\n"
+
                 if pd.isna(Element):
                     error_flag = True
                     error_msg += "Expected not N/A for Element, but got N/A.\n"
+
+
 
                 if pd.isna(Measure_Index):
                     error_flag = True
@@ -741,10 +751,11 @@ class ConstraintSet:
                 constraint_type_lower == "relative column name" or \
                 constraint_type_lower == "absolute column name":
             Fun = constraint_type_lower
-        else:
-            debug('unknown constraint type:' + constraint_type_lower)
-            debug("We will proceed interpreting constraint type as a python data frame column aggregation function")
-            Fun = constraint_type
+        # else:
+        #     debug('unknown constraint type:' + constraint_type_lower)
+        #     debug("We will proceed interpreting constraint type as a python data frame column aggregation function")
+        #     Fun = constraint_type #todo implement this?
+
 
         constraint_def_dict = {'constraint_name': Constraint_Name,
                                'constraint_id': new_constraint_id,
@@ -775,13 +786,12 @@ class ConstraintSet:
         stack_depth -= 1
         debug("EXIT addConstraint()")
 
-    def checkAllConstraints(self, printResults=True, outputFolder=None):
+    def checkAllConstraints(self):
         global stack_depth
         global print_logs
         debug("ENTER checkAllConstraints()")
         stack_depth += 1
         for constraint_id in self.constraint_id_to_args_dict_map.keys():
-            debug(str(constraint_id))
             self.test_results[constraint_id] = self.checkConstraintById(constraint_id)
 
         stack_depth -= 1
@@ -877,9 +887,9 @@ class ConstraintSet:
                         except:
                             result_value = -1
                     elif Fun == 'relative column data type':
-                        result_value = -1  # todo
+                        result_value = self.df.dtypes.index[Measure_Index] == self.relative_df.dtypes.index[Measure_Index]
                     elif Fun == 'relative column name':
-                        result_value = -1  # todo
+                        result_value = self.df.columns[Measure_Index] == self.relative_df.columns[Measure_Index]
                     else:
                         pass  # todo attempt literal interpretation?
                 elif pd.isna(Dimension_Index_List) and not pd.isna(Element) and pd.isna(
@@ -986,13 +996,13 @@ class ConstraintSet:
                     debug("Fun:" + str(Fun))
 
                     if Fun == 'cardinality':
-                        result_set_df = pd.pivot_table(df, columns=dimension_column_names_list,
-                                                       aggfunc=lambda x: x.nunique())
+                        result_set_df = pd.pivot_table(df, columns=dimension_column_names_list,aggfunc=lambda x: x.nunique())
                     elif Fun == 'null count':
-                        result_set_df = pd.pivot_table(df, columns=dimension_column_names_list,
-                                                       aggfunc=lambda x: sum(x.isnull()))
+                        result_set_df = pd.pivot_table(df, columns=dimension_column_names_list,aggfunc=lambda x: sum(x.isnull()))
                     elif Fun == 'min':
                         result_set_df = pd.pivot_table(df, columns=dimension_column_names_list, aggfunc='min')
+                    elif Fun == 'sum':
+                        result_set_df = pd.pivot_table(df, columns=dimension_column_names_list, aggfunc='sum')
                     elif Fun == 'mean':
                         result_set_df = pd.pivot_table(df, columns=dimension_column_names_list, aggfunc='mean')
                     elif Fun == 'median':
@@ -1029,15 +1039,21 @@ class ConstraintSet:
                     and constraint_type != 'relative dimension cross product element row count':
                 debug('df.columns:'+str(df.columns))
                 debug('result_set_df:\n'+str(result_set_df))
-                intermediate_result_pd_series = result_set_df[tuple(element_values_list)]
-                debug('intermediate_result_pd_series:\n' + str(intermediate_result_pd_series))
-                debug('intermediate_result_pd_series.index:'+str(intermediate_result_pd_series.index))
 
-                #this might need to be branched depending on the function
-                sel_vec_for_pivot_table = intermediate_result_pd_series.index == df.columns[Measure_Index]
+                try:
+                    intermediate_result_pd_series = result_set_df[tuple(element_values_list)]
+                    debug('intermediate_result_pd_series:\n' + str(intermediate_result_pd_series))
+                    debug('intermediate_result_pd_series.index:' + str(intermediate_result_pd_series.index))
 
-                debug('sel_vec_for_pivot_table:' + str(sel_vec_for_pivot_table))
-                result_value = intermediate_result_pd_series[sel_vec_for_pivot_table][0]
+                    # this might need to be branched depending on the function
+                    sel_vec_for_pivot_table = intermediate_result_pd_series.index == df.columns[Measure_Index]
+
+                    debug('sel_vec_for_pivot_table:' + str(sel_vec_for_pivot_table))
+                    result_value = intermediate_result_pd_series[sel_vec_for_pivot_table][0]
+                except KeyError:
+                    result_value = 0 #if this is executed, its because the element was not found in the dimension cross product
+
+
                 # result_value = result_set_df[tuple(element_values_list)][result_set_df.index == df.columns[Measure_Index]]
                 debug('result_value:' + str(result_value))
                 # debug('type(result_value):'+str(type(result_value)))
@@ -1046,6 +1062,7 @@ class ConstraintSet:
                 self.memoized_values[memo_key] = result_value
         else:
             debug('result_value found in memoized values')
+
         debug("exit calculateDataProfileStatistic()")
         return self.memoized_values[memo_key]
 
@@ -1173,6 +1190,7 @@ class ConstraintSet:
                                                               Measure_Index, lower_bound, upper_bound, Warn_or_Fail)
             debug('SET secondary_result_value = ' + str(self.memoized_values[memo_key]))
 
+        debug("constraint_type:"+str(constraint_type))
         if constraint_type != 'relative layout' and constraint_type != 'relative header' and constraint_type != 'bounded overlap' \
                 and constraint_type != 'relative column data type' and constraint_type != 'relative column name':
             try:
@@ -1181,7 +1199,8 @@ class ConstraintSet:
                 initial_result_value = float('inf')
 
             initial_result = (float(lower_bound) <= initial_result_value and initial_result_value <= float(upper_bound))
-            debug("RESULT: " + str(initial_result))
+            debug("SET initial_result = " + str(initial_result))
+            debug("Expected_Result:" + str(Expected_Result))
             if Expected_Result == 'PASS':
                 debug("CHECKING IS TRUE: " + str(lower_bound) + " <= " + str(initial_result_value) + " <= " + str(
                     upper_bound))
@@ -1189,26 +1208,26 @@ class ConstraintSet:
                 debug("CHECKING IS FALSE: " + str(lower_bound) + " <= " + str(initial_result_value) + " <= " + str(
                     upper_bound))
         elif constraint_type == 'bounded overlap':
-            initial_result = (float(lower_bound) <= initial_result_value and initial_result_value <= float(upper_bound))
-            debug("RESULT: " + str(initial_result))
             if Expected_Result == 'PASS':
                 debug("CHECKING IS TRUE: " + str(lower_bound) + " <= " + str(initial_result_value) + " <= " + str(
                     upper_bound))
             elif Expected_Result == 'FAIL':
-                debug("CHECKING IS FALSE: " + str(lower_bound) + " <= " + str(initial_result_value) + " <= " + str(
-                    upper_bound))
+                debug("CHECKING IS FALSE: " + str(lower_bound) + " <= " + str(initial_result_value) + " <= " + str(upper_bound))
+            initial_result = (float(lower_bound) <= initial_result_value and initial_result_value <= float(upper_bound))
+            debug("SET initial_result = " + str(initial_result))
         else:
             initial_result_value = self.memoized_values[primary_memo_key] == self.memoized_values[secondary_memo_key]
-
+            debug("Expected_Result:"+str(Expected_Result))
             if Expected_Result == 'PASS':
                 debug("CHECKING IS TRUE: " + str(initial_result_value))
                 initial_result = initial_result_value is True
             elif Expected_Result == 'FAIL':
                 debug("CHECKING IS FALSE: " + str(initial_result_value))
                 initial_result = initial_result_value is False
+            debug("SET initial_result = "+str(initial_result))
 
 
-
+        debug(str(self.constraint_set_id)+" "+str(Constraint_Id))
         if ( initial_result and Expected_Result == 'PASS') or ( not initial_result and Expected_Result == 'FAIL'):
             return_value = 0
         elif Warn_or_Fail == 0:
@@ -1271,6 +1290,7 @@ class ConstraintSet:
         # else:
         #     pass
 
+        info("BEGIN TEST: "+str(self.constraint_id_to_args_dict_map[constraint_id]['args']['constraint_name']))
         if 'absolute' in current_constraint["constraint_type"].lower():
             debug("Checking absolute constraint")
             test_result = self.checkAbsoluteConstraint(constraint_id,
@@ -1317,6 +1337,13 @@ class ConstraintSet:
                 current_constraint["constraint_type"]) + '\'')
             raise ValueError
 
+        if test_result == -1:
+            info("ERR  "+self.constraint_id_to_args_dict_map[constraint_id]['args']['constraint_name'])
+        elif test_result == 0:
+            info("PASS "+self.constraint_id_to_args_dict_map[constraint_id]['args']['constraint_name'])
+        elif test_result == 1:
+            info("FAIL "+self.constraint_id_to_args_dict_map[constraint_id]['args']['constraint_name'])
+
         stack_depth -= 1
         debug("EXIT checkConstraintById()")
 
@@ -1334,47 +1361,6 @@ class ConstraintSet:
         constraint_id = self.constraint_name_map[constraint_name]
         debug("exit checkConstraintByName()")
         return self.checkConstraintById(constraint_id)
-
-    def checkRelativeFileConstraint(self, lower_bound, upper_bound, warn_or_fail):
-        global stack_depth
-        global print_logs
-        debug("ENTER checkRelativeFileConstraint()")
-        stack_depth += 1
-        try:
-            if 'Row Count Ratio' not in self.memoized_values.keys():
-                self.memoized_values['Row Count Ratio'] = self.df.shape[0] / self.relative_df.shape[0]
-
-            if lower_bound <= self.memoized_values['Row Count Ratio'] and self.memoized_values[
-                'Row Count Ratio'] <= upper_bound:
-                stack_depth -= 1
-                debug("EXIT checkRelativeFileConstraint()")
-                return 0
-            elif warn_or_fail == 0:
-                warning(''.ljust(stack_depth * 2,
-                                 '.') + "Warning in checkRelativeFileConstraint")  # todo make more specific
-            elif warn_or_fail == 1:
-                error(
-                    "Error in checkRelativeFileConstraint")  # todo make more specific
-                stack_depth -= 1
-                debug("EXIT checkRelativeFileConstraint()")
-                return 1
-            else:
-                error(''.ljust(stack_depth * 2,
-                               '.') + "what is happening in checkRelativeFileConstraint()")  # todo make more specific
-                stack_depth -= 1
-                debug("EXIT checkRelativeFileConstraint()")
-                raise ValueError
-                return 1
-
-        except Exception as e:
-            error("uncaught exception in checkAbsoluteFileConstraint()")
-            traceback.print_tb()
-            debug("EXIT checkRelativeFileConstraint()")
-            stack_depth -= 1
-            return -1
-        stack_depth -= 1
-        debug("EXIT checkRelativeFileConstraint()")
-        return 1
 
     def getNewConstraintId(self):
         return len(self.constraint_id_to_args_dict_map.keys()) + 1
