@@ -338,7 +338,17 @@ class ConstraintSet:
             elif constraint_type.lower().strip() == 'absolute column cardinality' \
                     or constraint_type.lower().strip() == 'absolute column null count' \
                     or constraint_type.lower().strip() == 'relative column cardinality' \
-                    or constraint_type.lower().strip() == 'relative column null count':
+                    or constraint_type.lower().strip() == 'relative column null count' \
+                    or constraint_type.lower().strip() == 'relative column min' \
+                    or constraint_type.lower().strip() == 'relative column median' \
+                    or constraint_type.lower().strip() == 'relative column mean' \
+                    or constraint_type.lower().strip() == 'relative column mode' \
+                    or constraint_type.lower().strip() == 'relative column max' \
+                    or constraint_type.lower().strip() == 'absolute column min' \
+                    or constraint_type.lower().strip() == 'absolute column median' \
+                    or constraint_type.lower().strip() == 'absolute column mean' \
+                    or constraint_type.lower().strip() == 'absolute column mode' \
+                    or constraint_type.lower().strip() == 'absolute column max':
                 #Parameters that should not be defined
                 if not pd.isna(Dimension_Index_List):
                     error_flag = True
@@ -692,22 +702,34 @@ class ConstraintSet:
                 or constraint_type_lower == "relative dimension cross product element measure null count":
             Fun = 'null count'
         elif constraint_type_lower == "absolute dimension cross product element measure min" \
-                or constraint_type_lower == "relative dimension cross product element measure min":
+                or constraint_type_lower == "relative dimension cross product element measure min" \
+                or constraint_type_lower == "absolute column min" \
+                or constraint_type_lower == "relative column min":
             Fun = 'min'
         elif constraint_type_lower == "absolute dimension cross product element measure max" \
-                or constraint_type_lower == "relative dimension cross product element measure max":
+                or constraint_type_lower == "relative dimension cross product element measure max" \
+                or constraint_type_lower == "absolute column max" \
+                or constraint_type_lower == "relative column max":
             Fun = 'max'
         elif constraint_type_lower == "absolute dimension cross product element measure mean" \
-                or constraint_type_lower == "relative dimension cross product element measure mean":
+                or constraint_type_lower == "relative dimension cross product element measure mean" \
+                or constraint_type_lower == "absolute column mean" \
+                or constraint_type_lower == "relative column mean":
             Fun = 'mean'
         elif constraint_type_lower == "absolute dimension cross product element measure median" \
-                or constraint_type_lower == "relative dimension cross product element measure median":
+                or constraint_type_lower == "relative dimension cross product element measure median" \
+                or constraint_type_lower == "absolute column median" \
+                or constraint_type_lower == "relative column median":
             Fun = 'median'
         elif constraint_type_lower == "absolute dimension cross product element measure mode" \
-                or constraint_type_lower == "relative dimension cross product element measure mode":
+                or constraint_type_lower == "relative dimension cross product element measure mode" \
+                or constraint_type_lower == "absolute column mode" \
+                or constraint_type_lower == "relative column mode":
             Fun = 'mode'
         elif constraint_type_lower == "absolute dimension cross product element measure sum" \
-                or constraint_type_lower == "relative dimension cross product element measure sum":
+                or constraint_type_lower == "relative dimension cross product element measure sum" \
+                or constraint_type_lower == "absolute column sum" \
+                or constraint_type_lower == "relative column sum":
             Fun = 'sum'
         elif constraint_type_lower == "bounded overlap" or \
              constraint_type_lower == "absolute layout" or \
@@ -792,16 +814,16 @@ class ConstraintSet:
                 debug('Measure Column Name........:' + str(measure_column_name))
 
             try:
-                # is na ?
+                # is not na ?
                 # Parameter Case Dimension_Index_List      Element     Measure_Index       Case Names
-                # 000            Yes                       Yes         Yes                 Absolute\Relative File Row Count, Relative Header, Relative Layout
-                # 001            Yes                       Yes         No                  Bounded Overlap, Relative Column Data Type, Relative Column Name, Absolute\Relative Column F(x)
-                # 010            Yes                       No          Yes                 Absolute Header, Absolute Layout
-                # 011            Yes                       No          No                  Absolute Column Name, Absolute Column Data Type
-                # 100            No                        No          No                  Absolute\Relative Dimension Cross Product Element Measure F(x)
-                # 101            No                        No          Yes                 Absolute\Relative Dimension Cross Product Element Row Count
-                # 110            No                        Yes         No
-                # 111            No                        Yes         Yes                 Absolute\Relative Dimension Cross Product Cardinality
+                # 000            No                        No          No                  Absolute\Relative File Row Count, Relative Header, Relative Layout
+                # 001            No                        No          Yes                 Bounded Overlap, Relative Column Data Type, Relative Column Name, Absolute\Relative Column F(x)
+                # 010            No                        Yes         No                  Absolute Header, Absolute Layout
+                # 011            No                        Yes         Yes                 Absolute Column Name, Absolute Column Data Type
+                # 100            Yes                       No          No                  Absolute\Relative Dimension Cross Product Cardinality
+                # 101            Yes                       No          Yes
+                # 110            Yes                       Yes         No                  Absolute\Relative Dimension Cross Product Element Row Count
+                # 111            Yes                       Yes         Yes                 Absolute\Relative Dimension Cross Product Element Measure F(x)
 
                 if pd.isna(Dimension_Index_List) and pd.isna(Element) and pd.isna(
                         Measure_Index):  # Absolute\Relative File Row Count Case, Relative Header, Relative Layout
@@ -951,27 +973,13 @@ class ConstraintSet:
                     assert Fun == 'cardinality'
                     result_value = df.loc[:, dimension_column_names_list].drop_duplicates().shape[0]
                 elif not pd.isna(Dimension_Index_List) and pd.isna(Element) and not pd.isna(
-                        Measure_Index):  # Absolute Header, Absolute Layout
-                    debug("Parameter Case 101")
-                    if Fun == 'cardinality':
-                        result_set_df = df.groupby(dimension_column_names_list)[measure_column_name].agg('nunique').reset_index()
-                    elif Fun == 'mode':
-                        result_value = result_set_df = df.groupby(dimension_column_names_list)[measure_column_name].agg(lambda x: scipy.stats.mode(x))[0].mode[0]
-                    elif Fun == 'min':
-                        result_set_df = df.groupby(dimension_column_names_list)[measure_column_name].agg('min').reset_index()
-                    elif Fun == 'mean':
-                        result_set_df = df.groupby(dimension_column_names_list)[measure_column_name].agg('mean').reset_index()
-                    elif Fun == 'median':
-                        result_set_df = df.groupby(dimension_column_names_list)[measure_column_name].agg('median').reset_index()
-                    elif Fun == 'mode':
-                        result_set_df = df.groupby(dimension_column_names_list)[measure_column_name].agg('min').reset_index()
-                    elif Fun == 'max':
-                        result_set_df = df.groupby(dimension_column_names_list)[measure_column_name].agg('max').reset_index()
-                    else:
-                        result_set_df = df.groupby(dimension_column_names_list)[measure_column_name].agg('max').reset_index()  # todo
+                        Measure_Index):
+                    pass
+                    #This should never occur
                 elif not pd.isna(Dimension_Index_List) and not pd.isna(Element) and pd.isna(
                         Measure_Index):  # Absolute\Relative Dimension Cross Product Element Row Count
-                    result_value = df.loc[:,dimension_column_names_list].shape[0]
+                    debug("Parameter Case 110")
+                    result_value = df.loc[:,dimension_column_names_list].shape[0] #todo
                 elif not pd.isna(Dimension_Index_List) and not pd.isna(Element) and not pd.isna(
                         Measure_Index):  # Absolute\Relative Dimension Cross Product Element Measure F(x)
                     debug("Parameter Case 111")
@@ -1244,24 +1252,24 @@ class ConstraintSet:
         input__lower_bound = current_args['lower_bound']
         input__upper_bound = current_args['upper_bound']
         input__warn_or_fail = current_args['warn_or_fail']
-
-        if 'file row count' in constraint_type:
-            input__fun = 'count'
-            input__dimension_index_list = None
-            input__element = None
-            input__measure_index = None
-        elif 'column' in constraint_type:
-            input__dimension_index_list = None
-            input__element = None
-        elif 'dimension cross product element measure' in constraint_type:
-            pass
-        elif 'dimension cross product element' in constraint_type:
-            input__fun = 'count'
-        elif 'dimension cross product' in constraint_type:
-            input__fun = 'count'
-            input__dimension_index_list = None
-        else:
-            pass
+        #
+        # if 'file row count' in constraint_type:
+        #     input__fun = 'count'
+        #     input__dimension_index_list = None
+        #     input__element = None
+        #     input__measure_index = None
+        # elif 'column' in constraint_type:
+        #     input__dimension_index_list = None
+        #     input__element = None
+        # elif 'dimension cross product element measure' in constraint_type:
+        #     pass
+        # elif 'dimension cross product element' in constraint_type:
+        #     input__fun = 'count'
+        # elif 'dimension cross product' in constraint_type:
+        #     input__fun = 'count'
+        #     input__dimension_index_list = None
+        # else:
+        #     pass
 
         if 'absolute' in current_constraint["constraint_type"].lower():
             debug("Checking absolute constraint")
@@ -1290,18 +1298,18 @@ class ConstraintSet:
                                                        input__upper_bound,
                                                        input__warn_or_fail)
 
-        elif current_constraint["constraint_type"] == "Column Data Type":
-            # test_result = self.checkColumnDataTypeConstraint(current_args["column_name"],current_args["data_type"], current_args['warn_or_fail'])
-            pass
-        elif current_constraint["constraint_type"] == "Layout":
-            # test_result = self.checkDataLayoutConstraint(current_args["data_type_list"], current_args['warn_or_fail'])
-            pass
-        elif current_constraint["constraint_type"] == "Column Name":
-            # test_result = self.checkColumnNameConstraint(current_args["column_index"], current_args["goal_column_name"], current_args['warn_or_fail'])
-            pass
-        elif current_constraint["constraint_type"] == "Header":
-            # test_result = self.checkHeaderConstraint(current_args["header_list"], current_args['warn_or_fail'])
-            pass
+        # elif current_constraint["constraint_type"] == "Column Data Type":
+        #     # test_result = self.checkColumnDataTypeConstraint(current_args["column_name"],current_args["data_type"], current_args['warn_or_fail'])
+        #     pass
+        # elif current_constraint["constraint_type"] == "Layout":
+        #     # test_result = self.checkDataLayoutConstraint(current_args["data_type_list"], current_args['warn_or_fail'])
+        #     pass
+        # elif current_constraint["constraint_type"] == "Column Name":
+        #     # test_result = self.checkColumnNameConstraint(current_args["column_index"], current_args["goal_column_name"], current_args['warn_or_fail'])
+        #     pass
+        # elif current_constraint["constraint_type"] == "Header":
+        #     # test_result = self.checkHeaderConstraint(current_args["header_list"], current_args['warn_or_fail'])
+        #     pass
         else:
             stack_depth -= 1
             debug("EXIT checkConstraintById()")

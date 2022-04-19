@@ -197,6 +197,141 @@ class TestConstraintSet(TestCase):
         self.execute_test_using_list_of_tuples(fail_tuples,success_tuples)
         info("FINISHED TEST: test_absolute_file_row_count")
 
+    def test_absolute_column_min(self):
+        info("RUNNING TEST: test_absolute_column_min")
+        all_success_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['PASS']
+        all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
+
+        test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Column Min']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
+
+        fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
+        success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
+
+        info("There are "+str(len(fail_tuples)+len(success_tuples))+" subtests.")
+        self.execute_test_using_list_of_tuples(fail_tuples,success_tuples)
+        info("FINISHED TEST: test_absolute_column_min")
+
+    def test_absolute_column_max(self):
+        info("RUNNING TEST: test_absolute_column_max")
+        all_success_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['PASS']
+        all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
+
+        test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Column Max']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
+
+        fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
+        success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
+
+        info("There are "+str(len(fail_tuples)+len(success_tuples))+" subtests.")
+        self.execute_test_using_list_of_tuples(fail_tuples,success_tuples)
+        info("FINISHED TEST: test_absolute_column_max")
+
+    def test_absolute_column_median(self):
+        info("RUNNING TEST: test_absolute_column_median")
+        all_success_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['PASS']
+        all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
+
+        test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Column Median']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
+
+        fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
+        success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
+
+        info("There are "+str(len(fail_tuples)+len(success_tuples))+" subtests.")
+        self.execute_test_using_list_of_tuples(fail_tuples,success_tuples)
+        info("FINISHED TEST: test_absolute_column_median")
+
+    def test_absolute_column_mean(self):
+        info("RUNNING TEST: test_absolute_column_median")
+        all_success_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['PASS']
+        all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
+
+        test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Column Mean']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
+
+        fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
+        success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
+
+        info("There are "+str(len(fail_tuples)+len(success_tuples))+" subtests.")
+        self.execute_test_using_list_of_tuples(fail_tuples,success_tuples)
+        info("FINISHED TEST: test_absolute_column_mean")
+
+    def test_absolute_column_mode(self):
+        info("RUNNING TEST: test_absolute_column_mode")
+        all_success_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['PASS']
+        all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
+
+        test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Absolute Column Mode']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
+
+        fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
+        success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
+
+        info("There are "+str(len(fail_tuples)+len(success_tuples))+" subtests.")
+        self.execute_test_using_list_of_tuples(fail_tuples,success_tuples)
+        info("FINISHED TEST: test_absolute_column_mode")
+
+    def test_relative_column_min(self):
+        info("RUNNING TEST: test_relative_column_min")
+        all_success_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['PASS']
+        all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
+
+        test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Column Min']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
+
+        fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
+        success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
+
+        info("There are "+str(len(fail_tuples)+len(success_tuples))+" subtests.")
+        self.execute_test_using_list_of_tuples(fail_tuples,success_tuples)
+        info("FINISHED TEST: test_relative_column_min")
+
+    def test_relative_column_mean(self):
+        info("RUNNING TEST: test_relative_column_mean")
+        all_success_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['PASS']
+        all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
+
+        test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Column Mean']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
+
+        fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
+        success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
+
+        info("There are "+str(len(fail_tuples)+len(success_tuples))+" subtests.")
+        self.execute_test_using_list_of_tuples(fail_tuples,success_tuples)
+        info("FINISHED TEST: test_relative_column_mean")
+
+    def test_relative_column_median(self):
+        info("RUNNING TEST: test_relative_column_median")
+        all_success_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['PASS']
+        all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
+
+        test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Column Median']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
+
+        fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
+        success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
+
+        info("There are "+str(len(fail_tuples)+len(success_tuples))+" subtests.")
+        self.execute_test_using_list_of_tuples(fail_tuples,success_tuples)
+        info("FINISHED TEST: test_relative_column_median")
+
+    def test_relative_column_mode(self):
+        info("RUNNING TEST: test_relative_column_mode")
+        all_success_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['PASS']
+        all_fail_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['FAIL']
+
+        test_type_tuples = self.test_type_to_list_of_constraint_set_id_and_constraint_id_tuples['Relative Column Mode']
+        debug("len(test_type_tuples):" + str(len(test_type_tuples)))
+
+        fail_tuples = [value for value in test_type_tuples if value in all_fail_tuples] #this is list intersection
+        success_tuples = [value for value in test_type_tuples if value in all_success_tuples]
+
+        info("There are "+str(len(fail_tuples)+len(success_tuples))+" subtests.")
+        self.execute_test_using_list_of_tuples(fail_tuples,success_tuples)
+        info("FINISHED TEST: test_relative_column_mode")
+
     def test_absolute_column_cardinality(self):
         info("RUNNING TEST: test_absolute_column_cardinality")
         all_success_tuples = self.expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples['PASS']
