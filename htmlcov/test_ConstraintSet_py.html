@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=emulateIE7" />
-    <title>Coverage for test_ConstraintSet.py: 93%</title>
+    <title>Coverage for test_ConstraintSet.py: 96%</title>
     <link rel="icon" sizes="32x32" href="favicon_32.png">
     <link rel="stylesheet" href="style.css" type="text/css">
     <script type="text/javascript" src="coverage_html.js" defer></script>
@@ -13,7 +13,7 @@
     <div class="content">
         <h1>
             <span class="text">Coverage for </span><b>test_ConstraintSet.py</b>:
-            <span class="pc_cov">93%</span>
+            <span class="pc_cov">96%</span>
         </h1>
         <div id="help_panel_wrapper">
             <input id="help_panel_state" type="checkbox">
@@ -43,9 +43,9 @@
             </div>
         </div>
         <h2>
-            <span class="text">468 statements &nbsp;</span>
-            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">435<span class="text"> run</span></button>
-            <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">33<span class="text"> missing</span></button>
+            <span class="text">467 statements &nbsp;</span>
+            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">448<span class="text"> run</span></button>
+            <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">19<span class="text"> missing</span></button>
             <button type="button" class="exc show_exc button_toggle_exc" value="exc" data-shortcut="x" title="Toggle lines excluded">0<span class="text"> excluded</span></button>
         </h2>
         <div style="display: none;">
@@ -125,26 +125,26 @@
     <p class="pln"><span class="n"><a id="t66" href="#t66">66</a></span><span class="t">    <span class="com">#     self.assertEqual(1,0) #todo hard code correct result to assert for test_showResults()</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t67" href="#t67">67</a></span><span class="t">    <span class="com">#     debug("PASSED test_showResults()")</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t68" href="#t68">68</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t69" href="#t69">69</a></span><span class="t">    <span class="op">@</span><span class="nam">unittest</span><span class="op">.</span><span class="nam">skip</span><span class="op">(</span><span class="str">'Already passed'</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t69" href="#t69">69</a></span><span class="t">    <span class="com">#@unittest.skip('Already passed')</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t70" href="#t70">70</a></span><span class="t">    <span class="key">def</span> <span class="nam">test_expected_errors</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t71" href="#t71">71</a></span><span class="t">        <span class="key">global</span> <span class="nam">stack_depth</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t72" href="#t72">72</a></span><span class="t">        <span class="key">global</span> <span class="nam">print_logs</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t73" href="#t73">73</a></span><span class="t">        <span class="nam">print_logs</span> <span class="op">=</span> <span class="key">False</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t74" href="#t74">74</a></span><span class="t">        <span class="nam">debug</span><span class="op">(</span><span class="str">"ENTER test_expected_errors()"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t75" href="#t75">75</a></span><span class="t">        <span class="nam">stack_depth</span> <span class="op">+=</span> <span class="num">1</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t76" href="#t76">76</a></span><span class="t">        <span class="nam">relevant_test_tuples</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples</span><span class="op">[</span><span class="str">'ERR'</span><span class="op">]</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t73" href="#t73">73</a></span><span class="t">        <span class="nam">print_logs</span> <span class="op">=</span> <span class="key">False</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t74" href="#t74">74</a></span><span class="t">        <span class="nam">debug</span><span class="op">(</span><span class="str">"ENTER test_expected_errors()"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t75" href="#t75">75</a></span><span class="t">        <span class="nam">stack_depth</span> <span class="op">+=</span> <span class="num">1</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t76" href="#t76">76</a></span><span class="t">        <span class="nam">relevant_test_tuples</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">expected_result_to_list_of_constraint_set_id_and_constraint_id_tuples</span><span class="op">[</span><span class="str">'ERR'</span><span class="op">]</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t77" href="#t77">77</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t78" href="#t78">78</a></span><span class="t">        <span class="nam">stack_depth</span> <span class="op">-=</span> <span class="num">1</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t79" href="#t79">79</a></span><span class="t">        <span class="key">for</span> <span class="nam">i</span> <span class="key">in</span> <span class="nam">range</span><span class="op">(</span><span class="num">0</span><span class="op">,</span> <span class="nam">len</span><span class="op">(</span><span class="nam">relevant_test_tuples</span><span class="op">)</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t80" href="#t80">80</a></span><span class="t">            <span class="nam">current_tuple</span> <span class="op">=</span> <span class="nam">relevant_test_tuples</span><span class="op">[</span><span class="nam">i</span><span class="op">]</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t81" href="#t81">81</a></span><span class="t">            <span class="nam">current_constraint_set</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">test_set_definitions</span><span class="op">[</span><span class="nam">current_tuple</span><span class="op">[</span><span class="num">0</span><span class="op">]</span><span class="op">]</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t82" href="#t82">82</a></span><span class="t">            <span class="nam">info</span><span class="op">(</span><span class="str">"Checking Constraint #"</span><span class="op">+</span><span class="nam">str</span><span class="op">(</span><span class="nam">current_tuple</span><span class="op">[</span><span class="num">1</span><span class="op">]</span><span class="op">)</span> <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t83" href="#t83">83</a></span><span class="t">            <span class="nam">info</span><span class="op">(</span><span class="nam">current_constraint_set</span><span class="op">.</span><span class="nam">constraint_id_to_args_dict_map</span><span class="op">[</span><span class="nam">current_tuple</span><span class="op">[</span><span class="num">1</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="str">'args'</span><span class="op">]</span><span class="op">[</span><span class="str">'constraint_name'</span><span class="op">]</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t78" href="#t78">78</a></span><span class="t">        <span class="nam">stack_depth</span> <span class="op">-=</span> <span class="num">1</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t79" href="#t79">79</a></span><span class="t">        <span class="key">for</span> <span class="nam">i</span> <span class="key">in</span> <span class="nam">range</span><span class="op">(</span><span class="num">0</span><span class="op">,</span> <span class="nam">len</span><span class="op">(</span><span class="nam">relevant_test_tuples</span><span class="op">)</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t80" href="#t80">80</a></span><span class="t">            <span class="nam">current_tuple</span> <span class="op">=</span> <span class="nam">relevant_test_tuples</span><span class="op">[</span><span class="nam">i</span><span class="op">]</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t81" href="#t81">81</a></span><span class="t">            <span class="nam">current_constraint_set</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">test_set_definitions</span><span class="op">[</span><span class="nam">current_tuple</span><span class="op">[</span><span class="num">0</span><span class="op">]</span><span class="op">]</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t82" href="#t82">82</a></span><span class="t">            <span class="nam">info</span><span class="op">(</span><span class="str">"Checking Constraint #"</span><span class="op">+</span><span class="nam">str</span><span class="op">(</span><span class="nam">current_tuple</span><span class="op">[</span><span class="num">1</span><span class="op">]</span><span class="op">)</span> <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t83" href="#t83">83</a></span><span class="t">            <span class="nam">info</span><span class="op">(</span><span class="nam">current_constraint_set</span><span class="op">.</span><span class="nam">constraint_id_to_args_dict_map</span><span class="op">[</span><span class="nam">current_tuple</span><span class="op">[</span><span class="num">1</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="str">'args'</span><span class="op">]</span><span class="op">[</span><span class="str">'constraint_name'</span><span class="op">]</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t84" href="#t84">84</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t85" href="#t85">85</a></span><span class="t">            <span class="key">try</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t86" href="#t86">86</a></span><span class="t">               <span class="nam">current_constraint_set</span><span class="op">.</span><span class="nam">checkConstraintById</span><span class="op">(</span><span class="nam">current_tuple</span><span class="op">[</span><span class="num">1</span><span class="op">]</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t87" href="#t87">87</a></span><span class="t">            <span class="key">except</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t88" href="#t88">88</a></span><span class="t">               <span class="key">return</span> <span class="com">#this is the successful case</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t85" href="#t85">85</a></span><span class="t">            <span class="key">try</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t86" href="#t86">86</a></span><span class="t">               <span class="nam">current_constraint_set</span><span class="op">.</span><span class="nam">checkConstraintById</span><span class="op">(</span><span class="nam">current_tuple</span><span class="op">[</span><span class="num">1</span><span class="op">]</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t87" href="#t87">87</a></span><span class="t">            <span class="key">except</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t88" href="#t88">88</a></span><span class="t">               <span class="key">return</span> <span class="com">#this is the successful case</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t89" href="#t89">89</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t90" href="#t90">90</a></span><span class="t">        <span class="nam">self</span><span class="op">.</span><span class="nam">assertEqual</span><span class="op">(</span><span class="num">0</span><span class="op">,</span><span class="num">1</span><span class="op">)</span> <span class="com">#if this executes, there was a failure</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t91" href="#t91">91</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
@@ -730,7 +730,7 @@
     <div class="content">
         <p>
             <a class="nav" href="index.html">&#xab; index</a> &nbsp; &nbsp; <a class="nav" href="https://coverage.readthedocs.io">coverage.py v6.3.2</a>,
-            created at 2022-04-18 17:54 -0700
+            created at 2022-04-18 18:54 -0700
         </p>
     </div>
 </footer>

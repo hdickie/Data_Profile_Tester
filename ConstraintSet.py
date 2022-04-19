@@ -48,7 +48,7 @@ def create_test_constraint_sets_map_from_xlsx(xlsx_path):
     global stack_depth
     global print_logs
 
-    print_logs = False
+    print_logs = True
 
     debug("ENTER create_test_constraint_sets_map_from_xlsx()")
     stack_depth += 1
@@ -863,8 +863,6 @@ class ConstraintSet:
                         result_value = -1  # todo
                     elif Fun == 'relative column name':
                         result_value = -1  # todo
-                    elif Fun == 'bounded overlap':
-                        result_value = -1  # todo
                     else:
                         pass  # todo attempt literal interpretation?
                 elif pd.isna(Dimension_Index_List) and not pd.isna(Element) and pd.isna(
@@ -1146,11 +1144,8 @@ class ConstraintSet:
         if constraint_type == 'bounded overlap':
             memo_key = 'Bounded Overlap ' + str( Measure_Index)
             debug("Attempting to compute column overlap")
-            debug("pd.merge(self.df,self.relative_df, 'inner', on=list(self.df.columns[Measure_Index]))")
-            debug('pd.merge(self.df,self.relative_df, inner, on=self.df.columns[Measure_Index]):'+str(pd.merge(self.df.iloc[:,Measure_Index],self.relative_df.iloc[:,Measure_Index], 'inner') ) )
-            debug('str(pd.merge(self.df.iloc[:,Measure_Index],self.relative_df.iloc[:,Measure_Index], inner)):'+str(pd.merge(self.df.iloc[:,Measure_Index],self.relative_df.iloc[:,Measure_Index], 'inner') ) )
-            debug('intersection.shape[0]:'+str(pd.merge(self.df.iloc[:,Measure_Index],self.relative_df.iloc[:,Measure_Index], 'inner').shape[0]))
-            initial_result_value = pd.merge(self.df.iloc[:,Measure_Index],self.relative_df.iloc[:,Measure_Index], 'inner').shape[0] / self.df.shape[0]
+
+            initial_result_value = len(set(self.df.iloc[:, Measure_Index]) & set(self.relative_df.iloc[:, Measure_Index])) / len(set(self.df.iloc[:,Measure_Index]))
             self.memoized_values[memo_key] = initial_result_value
             debug('SET result_value = ' + str(self.memoized_values[memo_key]))
 

@@ -66,7 +66,7 @@ class TestConstraintSet(TestCase):
     #     self.assertEqual(1,0) #todo hard code correct result to assert for test_showResults()
     #     debug("PASSED test_showResults()")
 
-    @unittest.skip('Already passed')
+    #@unittest.skip('Already passed')
     def test_expected_errors(self):
         global stack_depth
         global print_logs
