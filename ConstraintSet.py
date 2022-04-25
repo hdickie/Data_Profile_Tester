@@ -1,6 +1,5 @@
 import logging
 import pandas as pd
-import traceback
 import csv
 import datetime
 import statistics
@@ -65,23 +64,22 @@ def create_test_constraint_sets_map_from_xlsx(xlsx_path):
     data_set_def_df = pd.read_excel(xlsx_path, sheet_name="Data Set Definitions")
 
     data_set_name_to_df_map = {}
-    for i in range(0, data_set_def_df.shape[0]):
-        Data_Set_Name = data_set_def_df.iloc[i, 0]
-        Description = data_set_def_df.iloc[i, 1]
-        Data_Set_Path = data_set_def_df.iloc[i, 2]
+    for index, row in data_set_def_df.iterrows():
+        Data_Set_Name = row['Data Set Name']
+        Description = row['Description']
+        Data_Set_Path = row['Data Set Path']
+
         data_set_name_to_df_map[Data_Set_Name] = pd.read_csv(Data_Set_Path)
 
     constraint_set_id_to_Constraint_Set_Object_map = {}
-    for i in range(0, constraint_set_def_df.shape[0]):
-        Constraint_Set_Name = constraint_set_def_df.iloc[i, 0]
-        Constraint_Set_Id = constraint_set_def_df.iloc[i, 1]
-        Primary_Data_Set_Name = constraint_set_def_df.iloc[i, 2]
-        Secondary_Data_Set_Name = constraint_set_def_df.iloc[i, 3]
+    for index, row in constraint_set_def_df.iterrows():
+        debug('row:'+str(row))
+        Constraint_Set_Name = row['Constraint Set Name']
+        Constraint_Set_Id = row['Constraint Set Id']
+        Primary_Data_Set_Name = row['Primary Data Set Name']
+        Secondary_Data_Set_Name = row['Secondary Data Set Name']
 
-        #debug("Constraint_Set_Name:"+Constraint_Set_Name)
-        #debug("Constraint_Set_Id:" + str(Constraint_Set_Id))
-        #debug("Primary_Data_Set_Name:" + Primary_Data_Set_Name)
-        #debug("Secondary_Data_Set_Name:" + Secondary_Data_Set_Name)
+        assert Primary_Data_Set_Name in data_set_name_to_df_map.keys() #if error here, failed to load primary data set
 
         if Secondary_Data_Set_Name == 'None':
             constraint_set_id_to_Constraint_Set_Object_map[Constraint_Set_Id] = ConstraintSet(Constraint_Set_Name,
@@ -97,26 +95,24 @@ def create_test_constraint_sets_map_from_xlsx(xlsx_path):
                                                                                               data_set_name_to_df_map[
                                                                                                   Secondary_Data_Set_Name])
 
-    for i in range(0, constraint_def_df.shape[0]):
-        Constraint_Set_Name = constraint_def_df.iloc[i, 0]
-        Constraint_Set_Id = constraint_def_df.iloc[i, 1]
-        Constraint_Name = constraint_def_df.iloc[i, 2]
-        Expected_Result = constraint_def_df.iloc[i, 3]
-        constraint_type = constraint_def_df.iloc[i, 4]
-        Dimension_Index_List = constraint_def_df.iloc[i, 5]
-        Element = constraint_def_df.iloc[i, 6]
-        Measure_Index = constraint_def_df.iloc[i, 7]
-        lower_bound = constraint_def_df.iloc[i, 8]
-        upper_bound = constraint_def_df.iloc[i, 9]
-        Warn_or_Fail = constraint_def_df.iloc[i, 10]
+    for index, row in constraint_def_df.iterrows():
+        Constraint_Set_Name = row['Constraint Set Name']
+        Constraint_Set_Id = row['Constraint Set Id']
+        Constraint_Name = row['Constraint Name']
+        Expected_Result = row['Expected Result']
+        constraint_type = row['Constraint Type']
+        Dimension_Index_List = row['Dimension Index List']
+        Element = row['Element']
+        Measure_Index = row['Measure Index']
+        lower_bound = row['Lower Bound']
+        upper_bound = row['Upper Bound']
+        Warn_or_Fail = row['Warn or Fail']
 
         #debug('Constraint_Set_Id:'+str(Constraint_Set_Id))
         #debug("Constraint_Set_Name:"+str(Constraint_Set_Name))
         #debug("constraint_def_df:\n"+str(constraint_def_df.to_string()))
 
-        if pd.isna(Constraint_Set_Id):
-            continue
-
+        assert not pd.isna(Constraint_Set_Id)
 
         constraint_set_id_to_Constraint_Set_Object_map[Constraint_Set_Id].addConstraint(Constraint_Name,
                                                                                         Expected_Result,
@@ -155,16 +151,14 @@ class ConstraintSet:
         running_str += str(len(self.constraint_type_to_constraint_list_map.keys())) + " types of tests have been defined."
         running_str += '\n'
         running_str += "Primary Data Frame Details:\n"
-        try:
-            running_str += str(self.df.head(1)) + "\n"
-        except:
-            running_str += "None" + "\n"
+
+        assert isinstance(self.df,pd.DataFrame)
+        running_str += str(self.df.head(1)) + "\n"
+
 
         running_str += "\nSecondary Data Frame Details:\n"
-        try:
-            running_str += str(self.relative_df.head(1)) + "\n"
-        except:
-            running_str += "None" + "\n"
+        assert isinstance(self.relative_df,pd.DataFrame)
+        running_str += str(self.relative_df.head(1)) + "\n"
         running_str += '\n'
 
         running_str += 'Constraint_Type'.ljust(62)
@@ -403,6 +397,34 @@ class ConstraintSet:
                     error_flag = True
                     error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
 
+            elif constraint_type.lower().strip() == 'absolute dimension cross product element row count' \
+                    or constraint_type.lower().strip() == 'relative dimension cross product element row count':
+                #Parameters that should not be defined
+                if not pd.isna(Measure_Index):
+                    error_flag = True
+                    error_msg += "Expected N/A for Measure_Index. Got:" + str(Measure_Index) + '\n'
+
+                # Parameters that should be defined
+                if pd.isna(Element):
+                    error_flag = True
+                    error_msg += "Expected not N/A for Element, but got N/A.\n"
+
+                if pd.isna(Dimension_Index_List):
+                    error_flag = True
+                    error_msg += "Expected not N/A for Dimension_Index_List, but got N/A.\n"
+
+                if pd.isna(lower_bound):
+                    error_flag = True
+                    error_msg += "Expected not N/A for lower_bound, but got N/A.\n"
+
+                if pd.isna(upper_bound):
+                    error_flag = True
+                    error_msg += "Expected not N/A for upper_bound, but got N/A.\n"
+
+
+                if pd.isna(Warn_or_Fail):
+                    error_flag = True
+                    error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
 
             elif constraint_type.lower().strip() == 'absolute dimension cross product element measure cardinality' \
                     or constraint_type.lower().strip() == 'absolute dimension cross product element measure null count' \
@@ -802,6 +824,9 @@ class ConstraintSet:
         debug("enter calculateDataProfileStatistic()")
         global stack_depth
         global print_logs
+
+        stack_depth += 1
+
         dimension_column_names_list = []
         if memo_key not in self.memoized_values.keys():
             debug(memo_key + " not in memoized values")
@@ -850,6 +875,7 @@ class ConstraintSet:
                 elif pd.isna(Dimension_Index_List) and pd.isna(Element) and not pd.isna(
                         Measure_Index):  # Bounded Overlap, Relative Column Data Type, Relative Column Name, Absolute\Relative Column F(x)
                     debug("Parameter Case 001")
+
                     if Fun == 'cardinality':
                         result_value = df.iloc[:, Measure_Index].nunique()
                     elif Fun == 'null count':
@@ -857,31 +883,37 @@ class ConstraintSet:
 
                     #strings can legitimately be passed to these below functions, but this is not valid input for this project
                     elif Fun == 'min':
-                        result_value = min(df.iloc[:, Measure_Index])
+                        result_value = min(df.loc[ pd.isna(df.iloc[:,Measure_Index]) == False, df.columns[Measure_Index]])
                         try:
                             float(result_value)
                         except:
                             result_value = -1
                     elif Fun == 'mean':
-                        result_value = statistics.mean(df.iloc[:, Measure_Index])
+                        result_value = statistics.mean(df.loc[ pd.isna(df.iloc[:,Measure_Index]) == False, df.columns[Measure_Index]])
                         try:
                             float(result_value)
                         except:
                             result_value = -1
                     elif Fun == 'median':
-                        result_value = statistics.median(df.iloc[:, Measure_Index])
+                        result_value = statistics.median(df.loc[ pd.isna(df.iloc[:,Measure_Index]) == False, df.columns[Measure_Index]])
                         try:
                             float(result_value)
                         except:
                             result_value = -1
                     elif Fun == 'mode':
-                        result_value = statistics.mode(df.iloc[:, Measure_Index])
+                        result_value = statistics.mode(df.loc[ pd.isna(df.iloc[:,Measure_Index]) == False, df.columns[Measure_Index]])
                         try:
                             float(result_value)
                         except:
                             result_value = -1
                     elif Fun == 'max':
-                        result_value = max(df.iloc[:, Measure_Index])
+                        result_value = max((df.loc[ pd.isna(df.iloc[:,Measure_Index]) == False, df.columns[Measure_Index]]))
+                        try:
+                            float(result_value)
+                        except:
+                            result_value = -1
+                    elif Fun == 'sum':
+                        result_value = sum((df.loc[ pd.isna(df.iloc[:,Measure_Index]) == False, df.columns[Measure_Index]]))
                         try:
                             float(result_value)
                         except:
@@ -989,7 +1021,14 @@ class ConstraintSet:
                 elif not pd.isna(Dimension_Index_List) and not pd.isna(Element) and pd.isna(
                         Measure_Index):  # Absolute\Relative Dimension Cross Product Element Row Count
                     debug("Parameter Case 110")
-                    result_value = df.loc[:,dimension_column_names_list].shape[0] #todo
+
+                    result_subset = df.loc[:,dimension_column_names_list]
+                    for i in range(0,len(element_values_list)):
+                        if isinstance(result_subset,pd.DataFrame):
+                            row_sel_vec = (result_subset.loc[:,dimension_column_names_list[i]] == element_values_list[i]).values
+                            result_subset = result_subset.loc[ row_sel_vec , ]
+
+                    result_value = result_subset.shape[0]
                 elif not pd.isna(Dimension_Index_List) and not pd.isna(Element) and not pd.isna(
                         Measure_Index):  # Absolute\Relative Dimension Cross Product Element Measure F(x)
                     debug("Parameter Case 111")
@@ -1059,10 +1098,12 @@ class ConstraintSet:
                 # debug('type(result_value):'+str(type(result_value)))
                 self.memoized_values[memo_key] = result_value
             else:
+                debug('memo_key:'+str(memo_key))
                 self.memoized_values[memo_key] = result_value
         else:
             debug('result_value found in memoized values')
 
+        stack_depth -= 1
         debug("exit calculateDataProfileStatistic()")
         return self.memoized_values[memo_key]
 
@@ -1161,9 +1202,12 @@ class ConstraintSet:
 
         if constraint_type == 'bounded overlap':
             memo_key = 'Bounded Overlap ' + str( Measure_Index)
-            debug("Attempting to compute column overlap")
-
-            initial_result_value = len(set(self.df.iloc[:, Measure_Index]) & set(self.relative_df.iloc[:, Measure_Index])) / len(set(self.df.iloc[:,Measure_Index]))
+            debug("Attempting to compute bounded overlap")
+            debug("numerator:"+str(len(set(self.df.iloc[:, Measure_Index]) & set(self.relative_df.iloc[:, Measure_Index] ) ) ) )
+            debug(str(set(self.df.iloc[:, Measure_Index]) & set(self.relative_df.iloc[:, Measure_Index])))
+            debug("denominator:" + str(len(set(self.df.iloc[:,Measure_Index])) ))
+            debug(str(set(self.df.iloc[:,Measure_Index])))
+            initial_result_value = len(set(self.df.loc[ pd.isna(self.df.iloc[:,Measure_Index]) == False , : self.df.columns[Measure_Index] ]) & set(self.relative_df.loc[ pd.isna(self.relative_df.iloc[:,Measure_Index]) == False , : self.relative_df.columns[Measure_Index] ])) / len(set(self.df.loc[ pd.isna(self.df.iloc[:,Measure_Index]) == False , : self.df.columns[Measure_Index] ]))
             self.memoized_values[memo_key] = initial_result_value
             debug('SET result_value = ' + str(self.memoized_values[memo_key]))
 
