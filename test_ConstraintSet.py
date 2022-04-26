@@ -16,7 +16,7 @@ class TestConstraintSet(TestCase):
     def setUpClass(self):
 
         self.test_set_definitions = create_test_constraint_sets_map_from_xlsx(
-            'C:/Users/HumeD/PycharmProjects/Data_Profile_Tester/test_constraints_v2.xlsx')
+            'C:/Users/HumeD/PycharmProjects/Data_Profile_Tester/test_constraints_v3.xlsx')
         #print(self.test_set_definitions)
         #print("#################################################")
         test_type_to_list_of_constraint_set_id_and_constraint_id_tuples = {}

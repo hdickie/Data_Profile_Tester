@@ -7,7 +7,10 @@ import scipy.stats
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
-logging.basicConfig(format='%(asctime)s ' + 'ConstraintSet' + ' %(levelname)s| %(message)s')
+logging.basicConfig(format='%(asctime)s %(levelname)s| %(message)s',
+                    filename = "C:/sandbox/data/logs/Data_Profile_Tester/Data_Profile_Tester__ConstraintSet_"+datetime.datetime.now().strftime('%Y%m%d')+".log",
+                    filemode="w",
+                    level=logging.DEBUG)
 
 global stack_depth
 stack_depth = 0
@@ -70,10 +73,10 @@ def create_test_constraint_sets_map_from_xlsx(xlsx_path):
         Data_Set_Path = row['Data Set Path']
 
         data_set_name_to_df_map[Data_Set_Name] = pd.read_csv(Data_Set_Path)
+        debug('Loaded '+Data_Set_Name+' from: '+Data_Set_Path)
 
     constraint_set_id_to_Constraint_Set_Object_map = {}
     for index, row in constraint_set_def_df.iterrows():
-        debug('row:'+str(row))
         Constraint_Set_Name = row['Constraint Set Name']
         Constraint_Set_Id = row['Constraint Set Id']
         Primary_Data_Set_Name = row['Primary Data Set Name']
@@ -94,6 +97,10 @@ def create_test_constraint_sets_map_from_xlsx(xlsx_path):
                                                                                                   Primary_Data_Set_Name],
                                                                                               data_set_name_to_df_map[
                                                                                                   Secondary_Data_Set_Name])
+        info("Initialized ConstraintSet #"+str(Constraint_Set_Id))
+        info("..Name.....: " + Constraint_Set_Name or 'None')
+        info("..Primary..: " + Primary_Data_Set_Name or 'None') #should never need the 'or None' here but why not
+        info("..Secondary: " + Secondary_Data_Set_Name or 'None')
 
     for index, row in constraint_def_df.iterrows():
         Constraint_Set_Name = row['Constraint Set Name']
@@ -112,18 +119,30 @@ def create_test_constraint_sets_map_from_xlsx(xlsx_path):
         #debug("Constraint_Set_Name:"+str(Constraint_Set_Name))
         #debug("constraint_def_df:\n"+str(constraint_def_df.to_string()))
 
-        assert not pd.isna(Constraint_Set_Id)
+        try:
+            assert not pd.isna(Constraint_Set_Id)
+            assert Constraint_Set_Id in constraint_set_id_to_Constraint_Set_Object_map.keys()
 
-        constraint_set_id_to_Constraint_Set_Object_map[Constraint_Set_Id].addConstraint(Constraint_Name,
-                                                                                        Expected_Result,
-                                                                                        constraint_type,
-                                                                                        Dimension_Index_List,
-                                                                                        Element,
-                                                                                        Measure_Index,
-                                                                                        lower_bound,
-                                                                                        upper_bound,
-                                                                                        Warn_or_Fail)
+            constraint_set_id_to_Constraint_Set_Object_map[Constraint_Set_Id].addConstraint(Constraint_Name,
+                                                                                            Expected_Result,
+                                                                                            constraint_type,
+                                                                                            Dimension_Index_List,
+                                                                                            Element,
+                                                                                            Measure_Index,
+                                                                                            lower_bound,
+                                                                                            upper_bound,
+                                                                                            Warn_or_Fail)
+        except Exception as e:
+            error("A constraint was defined with an invalid constraint set id. This constraint cannot be processed.")
+            error("You can use a dummy value during development: an id is just need as a map key")
+            error("Constraint Set Id:" + str(Constraint_Set_Id) or 'No Constraint Set Id Defined')
+            error("Valid constraint ids: "+str(constraint_set_id_to_Constraint_Set_Object_map.keys()))
+            error("Constraint Name:"+str(Constraint_Name) or 'No Constraint Name Defined')
+            error(e)
 
+
+    debug('The full constraint set:')
+    debug(str(constraint_set_id_to_Constraint_Set_Object_map[Constraint_Set_Id]))
     stack_depth -= 1
     debug("EXIT create_test_constraint_sets_map_from_xlsx()")
     print_logs = True
@@ -148,7 +167,8 @@ class ConstraintSet:
     def __str__(self):
 
         running_str = "\n\nConstraint Set #" + str(self.constraint_set_id) + ": " + str(self.constraint_set_name) + "\n"
-        running_str += str(len(self.constraint_type_to_constraint_list_map.keys())) + " types of tests have been defined."
+        running_str += str(len(self.constraint_type_to_constraint_list_map.keys())) + " types of tests have been defined.\n"
+        running_str += "There are " + str(len(self.constraint_id_to_args_dict_map.keys())) + " total tests.\n"
         running_str += '\n'
         running_str += "Primary Data Frame Details:\n"
 
@@ -162,7 +182,7 @@ class ConstraintSet:
         running_str += '\n'
 
         running_str += 'Constraint_Type'.ljust(62)
-        running_str += 'Constraint_Name'.ljust(52)
+        running_str += 'Constraint_Name'.ljust(150)
         running_str += 'Constraint_Id'.ljust(15)
         running_str += 'Expected_Result'.ljust(17)
         running_str += 'Dimension_Index_List'.ljust(22)
@@ -175,7 +195,7 @@ class ConstraintSet:
         for constraint_type in self.constraint_type_to_constraint_list_map.keys():
             for curr_constr in self.constraint_type_to_constraint_list_map[constraint_type]:
                 running_str += constraint_type.ljust(62)
-                running_str += str(curr_constr['constraint_name']).ljust(52)
+                running_str += str(curr_constr['constraint_name']).ljust(150)
                 running_str += str(curr_constr['constraint_id']).ljust(15)
                 running_str += str(curr_constr['expected_result']).ljust(17)
                 running_str += str(curr_constr['dimension_index_list']).ljust(22)
@@ -189,7 +209,6 @@ class ConstraintSet:
 
     def __init__(self, constraint_set_name, constraint_set_id, df, relative_df):
         # todo input parameter validation
-        logging.info("Initializing new ConstraintSet: "+constraint_set_name+" : #"+str(constraint_set_id))
 
         self.constraint_set_name = constraint_set_name
         self.constraint_set_id = constraint_set_id
@@ -209,10 +228,9 @@ class ConstraintSet:
                       Measure_Index, lower_bound, upper_bound, Warn_or_Fail):
         global stack_depth
         global print_logs
-        debug("ENTER addConstraint()")
+        debug("ENTER addConstraint(): "+str(Constraint_Name).ljust(25))
+        debug("Type: "+str(constraint_type))
         stack_depth += 1
-        debug("Constraint_Type:" + str(constraint_type))
-        debug("Constraint_Name:"+str(Constraint_Name))
 
         #todo add check that element and dimension cross product have same rank
 
@@ -223,10 +241,10 @@ class ConstraintSet:
         #todo bounded overlap params must be between 0 and 1
 
         try:
-            error_msg = "\n"
+            error_msg = "\n\n# DETECTED ERRORS For ("+str(constraint_type)+") test named ("+str(Constraint_Name)+")\n"
             error_flag = False
 
-            #Generic Validation
+            # Generic Validation
             if str(upper_bound).lower() == 'inf':
                 lower_bound = float('inf')
 
@@ -238,90 +256,90 @@ class ConstraintSet:
                     assert float(lower_bound) >= 0
                 except:
                     error_flag = True
-                    error_msg += "Lower Bound must be non-negative\n"
+                    error_msg += "# Lower Bound must be non-negative\n"
 
             if not pd.isna(upper_bound):
                 try:
                     assert float(upper_bound) >= 0
                 except:
                     error_flag = True
-                    error_msg += "Upper Bound must be non-negative\n"
+                    error_msg += "# Upper Bound must be non-negative\n"
 
             if not pd.isna(lower_bound) and not pd.isna(upper_bound):
                 try:
                     assert float(upper_bound) >= float(lower_bound)
                 except:
                     error_flag = True
-                    error_msg += "Lower Bound must be less than upper bound\n"
+                    error_msg += "# Lower Bound must be less than upper bound\n"
 
             if not pd.isna(Measure_Index):
                 try:
-                    Measure_Index = int(Measure_Index)
+                    assert isinstance(Measure_Index,int)
                     try:
                         assert Measure_Index <= (self.df.shape[1] - 1)
                         assert Measure_Index >= 0
                     except:
                         error_flag = True
-                        error_msg += "Measure Index out of bounds\n"
+                        error_msg += "# Measure Index out of bounds\n"
                 except:
                     error_flag = True
-                    error_msg += "Measure Index is not an integer. Got:"+str(Measure_Index)+'\n'
+                    error_msg += "# Measure Index is not an integer. Got:"+str(Measure_Index)+'\n'
 
             if not pd.isna(Dimension_Index_List):
                 try:
                     assert len(Dimension_Index_List.split(',')) >= 2
                     for dimension_index in Dimension_Index_List.split(','):
                         try:
-                            int(dimension_index)
+                            assert isinstance(dimension_index,int)
                             try:
                                 debug("checking dimension_index <= self.df.shape[1] - 1")
                                 debug(str(dimension_index)+" <= "+str(self.df.shape[1] - 1))
                                 assert 0 <= int(dimension_index) <= self.df.shape[1] - 1
                             except Exception as e:
                                 error_flag = True
-                                error_msg += "A dimension index was out of bounds. Offending value:"+str(dimension_index)+"\n"
+                                error_msg += "# A dimension index was out of bounds. Offending value:"+str(dimension_index)+"\n"
                         except:
                             error_flag = True
-                            error_msg += "A dimension index failed cast to int. Offending value:" + str(dimension_index) + '\n'
+                            error_msg += "# A dimension index failed cast to int. Offending value:" + str(dimension_index) + '\n'
                 except:
                     error_flag = True
-                    error_msg += "Dimension_Index_List has fewer than 2 items. Got:"+str(Measure_Index)+'\n'
+                    error_msg += "# Dimension_Index_List has fewer than 2 items. Got:"+str(Measure_Index)+'\n'
 
             try:
                 assert Warn_or_Fail == 0 or Warn_or_Fail == 1
             except:
                 error_flag = True
-                error_msg += "Warn_or_Fail was not 0 or 1. Got:"+str(Warn_or_Fail)+"\n"
+                error_msg += "# Warn_or_Fail was not 0 or 1. Got:"+str(Warn_or_Fail)+"\n"
 
-            #Test Type Validation
+            # Test Type Validation
             if constraint_type.lower().strip() == 'absolute file row count' \
                     or constraint_type.lower().strip() == 'relative file row count':
-                #Parameters that should not be defined
+                # Parameters that should not be defined
                 if not pd.isna(Dimension_Index_List):
                     error_flag = True
-                    error_msg += "Expected N/A for Dimension_Index_List. Got:"+str(Dimension_Index_List)+'\n'
+                    error_msg += "# Expected N/A for Dimension_Index_List. Got:"+str(Dimension_Index_List)+'\n'
 
                 if not pd.isna(Element):
                     error_flag = True
-                    error_msg += "Expected N/A for Element. Got:" + str(Element) + '\n'
+                    error_msg += "# Expected N/A for Element. Got:" + str(Element) + '\n'
 
                 if not pd.isna(Measure_Index):
                     error_flag = True
-                    error_msg += "Expected N/A for Measure_Index. Got:" + str(Measure_Index) + '\n'
+                    error_msg += "# Expected N/A for Measure_Index. Got:" + str(Measure_Index) + '\n'
 
-                #Parameters that should be defined
+                # Parameters that should be defined
                 if pd.isna(lower_bound):
                     error_flag = True
-                    error_msg += "Expected not N/A for lower_bound, but got N/A.\n"
+                    error_msg += "# Expected not N/A for lower_bound, but got N/A.\n"
 
                 if pd.isna(upper_bound):
                     error_flag = True
-                    error_msg += "Expected not N/A for upper_bound, but got N/A.\n"
+                    error_msg += "# Expected not N/A for upper_bound, but got N/A.\n"
 
 
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
-                    error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Warn_or_Fail, but got N/A.\n"
 
 
 
@@ -331,6 +349,7 @@ class ConstraintSet:
                     or constraint_type.lower().strip() == 'relative column null count' \
                     or constraint_type.lower().strip() == 'relative column min' \
                     or constraint_type.lower().strip() == 'relative column median' \
+                    or constraint_type.lower().strip() == 'relative column sum' \
                     or constraint_type.lower().strip() == 'relative column mean' \
                     or constraint_type.lower().strip() == 'relative column mode' \
                     or constraint_type.lower().strip() == 'relative column max' \
@@ -338,93 +357,94 @@ class ConstraintSet:
                     or constraint_type.lower().strip() == 'absolute column median' \
                     or constraint_type.lower().strip() == 'absolute column mean' \
                     or constraint_type.lower().strip() == 'absolute column mode' \
+                    or constraint_type.lower().strip() == 'absolute column sum' \
                     or constraint_type.lower().strip() == 'absolute column max':
-                #Parameters that should not be defined
+                # Parameters that should not be defined
                 if not pd.isna(Dimension_Index_List):
                     error_flag = True
-                    error_msg += "Expected N/A for Dimension_Index_List. Got:" + str(Dimension_Index_List) + '\n'
+                    error_msg += "# Expected N/A for Dimension_Index_List. Got:" + str(Dimension_Index_List) + '\n'
 
                 if not pd.isna(Element):
                     error_flag = True
-                    error_msg += "Expected N/A for Element. Got:" + str(Element) + '\n'
+                    error_msg += "# Expected N/A for Element. Got:" + str(Element) + '\n'
 
-                # Parameters that should be defined
+                #  Parameters that should be defined
                 if pd.isna(Measure_Index):
                     error_flag = True
-                    error_msg += "Expected not N/A for Measure_Index, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Measure_Index, but got N/A.\n"
 
                 if pd.isna(lower_bound):
                     error_flag = True
-                    error_msg += "Expected not N/A for lower_bound, but got N/A.\n"
+                    error_msg += "# Expected not N/A for lower_bound, but got N/A.\n"
 
 
                 if pd.isna(upper_bound):
                     error_flag = True
-                    error_msg += "Expected not N/A for upper_bound, but got N/A.\n"
+                    error_msg += "# Expected not N/A for upper_bound, but got N/A.\n"
 
 
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
-                    error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Warn_or_Fail, but got N/A.\n"
 
 
             elif constraint_type.lower().strip() == 'absolute dimension cross product cardinality' \
                     or constraint_type.lower().strip() == 'relative dimension cross product cardinality':
-                #Parameters that should not be defined
+                # Parameters that should not be defined
                 if not pd.isna(Measure_Index):
                     error_flag = True
-                    error_msg += "Expected N/A for Measure_Index. Got:" + str(Measure_Index) + '\n'
+                    error_msg += "# Expected N/A for Measure_Index. Got:" + str(Measure_Index) + '\n'
 
                 if not pd.isna(Element):
                     error_flag = True
-                    error_msg += "Expected N/A for Element. Got:" + str(Element) + '\n'
+                    error_msg += "# Expected N/A for Element. Got:" + str(Element) + '\n'
 
-                # Parameters that should be defined
+                #  Parameters that should be defined
                 if pd.isna(Dimension_Index_List):
                     error_flag = True
-                    error_msg += "Expected not N/A for Dimension_Index_List, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Dimension_Index_List, but got N/A.\n"
 
                 if pd.isna(lower_bound):
                     error_flag = True
-                    error_msg += "Expected not N/A for lower_bound, but got N/A.\n"
+                    error_msg += "# Expected not N/A for lower_bound, but got N/A.\n"
 
                 if pd.isna(upper_bound):
                     error_flag = True
-                    error_msg += "Expected not N/A for upper_bound, but got N/A.\n"
+                    error_msg += "# Expected not N/A for upper_bound, but got N/A.\n"
 
 
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
-                    error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Warn_or_Fail, but got N/A.\n"
 
             elif constraint_type.lower().strip() == 'absolute dimension cross product element row count' \
                     or constraint_type.lower().strip() == 'relative dimension cross product element row count':
-                #Parameters that should not be defined
+                # Parameters that should not be defined
                 if not pd.isna(Measure_Index):
                     error_flag = True
-                    error_msg += "Expected N/A for Measure_Index. Got:" + str(Measure_Index) + '\n'
+                    error_msg += "# Expected N/A for Measure_Index. Got:" + str(Measure_Index) + '\n'
 
-                # Parameters that should be defined
+                #  Parameters that should be defined
                 if pd.isna(Element):
                     error_flag = True
-                    error_msg += "Expected not N/A for Element, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Element, but got N/A.\n"
 
                 if pd.isna(Dimension_Index_List):
                     error_flag = True
-                    error_msg += "Expected not N/A for Dimension_Index_List, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Dimension_Index_List, but got N/A.\n"
 
                 if pd.isna(lower_bound):
                     error_flag = True
-                    error_msg += "Expected not N/A for lower_bound, but got N/A.\n"
+                    error_msg += "# Expected not N/A for lower_bound, but got N/A.\n"
 
                 if pd.isna(upper_bound):
                     error_flag = True
-                    error_msg += "Expected not N/A for upper_bound, but got N/A.\n"
+                    error_msg += "# Expected not N/A for upper_bound, but got N/A.\n"
 
 
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
-                    error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Warn_or_Fail, but got N/A.\n"
 
             elif constraint_type.lower().strip() == 'absolute dimension cross product element measure cardinality' \
                     or constraint_type.lower().strip() == 'absolute dimension cross product element measure null count' \
@@ -433,123 +453,121 @@ class ConstraintSet:
                     or constraint_type.lower().strip() == 'absolute dimension cross product element measure median' \
                     or constraint_type.lower().strip() == 'absolute dimension cross product element measure mode' \
                     or constraint_type.lower().strip() == 'absolute dimension cross product element measure max' \
+                    or constraint_type.lower().strip() == 'absolute dimension cross product element measure sum' \
                     or constraint_type.lower().strip() == 'relative dimension cross product element measure cardinality' \
                     or constraint_type.lower().strip() == 'relative dimension cross product element measure null count' \
                     or constraint_type.lower().strip() == 'relative dimension cross product element measure min' \
                     or constraint_type.lower().strip() == 'relative dimension cross product element measure mean' \
                     or constraint_type.lower().strip() == 'relative dimension cross product element measure median' \
                     or constraint_type.lower().strip() == 'relative dimension cross product element measure mode' \
+                    or constraint_type.lower().strip() == 'relative dimension cross product element measure sum' \
                     or constraint_type.lower().strip() == 'relative dimension cross product element measure max':
 
                 try:
                     float(min(self.df.iloc[:, Measure_Index]))
                 except:
                     error_flag = True
-                    error_msg += "Measure column in primary df failed cast to float.\n"
+                    error_msg += "# Measure column in primary df failed cast to float.\n"
 
                 if 'relative' in constraint_type.lower():
                     try:
                         float(min(self.relative_df.iloc[:,Measure_Index]))
                     except:
                         error_flag = True
-                        error_msg += "Measure column in relative df failed cast to float.\n"
+                        error_msg += "# Measure column in relative df failed cast to float.\n"
 
 
-                # Parameters that should be defined
+                #  Parameters that should be defined
                 if pd.isna(Dimension_Index_List):
                     error_flag = True
-                    error_msg += "Expected not N/A for Dimension_Index_List, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Dimension_Index_List, but got N/A.\n"
 
                 try:
                     assert len(Dimension_Index_List.split(',')) == len(Element.split(','))
                 except:
                     error_flag = True
-                    error_msg += "Dimension_Index_List and Element have different rank, which is an invalid test configuration.\n"
+                    error_msg += "# Dimension_Index_List and Element have different rank, which is an invalid test configuration.\n"
 
                 if pd.isna(Element):
                     error_flag = True
-                    error_msg += "Expected not N/A for Element, but got N/A.\n"
-
-
+                    error_msg += "# Expected not N/A for Element, but got N/A.\n"
 
                 if pd.isna(Measure_Index):
                     error_flag = True
-                    error_msg += "Expected not N/A for Measure_Index, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Measure_Index, but got N/A.\n"
 
                 if pd.isna(lower_bound):
                     error_flag = True
-                    error_msg += "Expected not N/A for lower_bound, but got N/A.\n"
-
+                    error_msg += "# Expected not N/A for lower_bound, but got N/A.\n"
 
                 if pd.isna(upper_bound):
                     error_flag = True
-                    error_msg += "Expected not N/A for upper_bound, but got N/A.\n"
-
+                    error_msg += "# Expected not N/A for upper_bound, but got N/A.\n"
 
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
-                    error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Warn_or_Fail, but got N/A.\n"
 
 
             elif constraint_type.lower().strip() == 'absolute layout' \
                     or constraint_type.lower().strip() == 'absolute header':
-                #Parameters that should not be defined
+                # Parameters that should not be defined
                 if not pd.isna(Dimension_Index_List):
                     error_flag = True
-                    error_msg += "Expected N/A for Dimension_Index_List. Got:"+str(Dimension_Index_List)+"\n"
+                    error_msg += "# Expected N/A for Dimension_Index_List. Got:"+str(Dimension_Index_List)+"\n"
 
                 if not pd.isna(Measure_Index):
                     error_flag = True
-                    error_msg += "Expected N/A for Measure_Index. Got:"+str(Measure_Index)+"\n"
+                    error_msg += "# Expected N/A for Measure_Index. Got:"+str(Measure_Index)+"\n"
 
                 if not pd.isna(lower_bound):
                     error_flag = True
-                    error_msg += "Expected N/A for Lower_Bound. Got:" + str(lower_bound) + '\n'
+                    error_msg += "# Expected N/A for Lower_Bound. Got:" + str(lower_bound) + '\n'
 
 
                 if not pd.isna(upper_bound):
                     error_flag = True
-                    error_msg += "Expected N/A for Upper_Bound. Got:" + str(upper_bound) + '\n'
+                    error_msg += "# Expected N/A for Upper_Bound. Got:" + str(upper_bound) + '\n'
 
 
-                # Parameters that should be defined
+                #  Parameters that should be defined
                 if pd.isna(Element):
                     error_flag = True
-                    error_msg += "Expected not N/A for Element, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Element, but got N/A.\n"
 
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
-                    error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Warn_or_Fail, but got N/A.\n"
 
 
 
             elif constraint_type.lower().strip() == 'absolute column name' \
                     or constraint_type.lower().strip() == 'absolute column data type':
-                # Parameters that should not be defined
+                #  Parameters that should not be defined
                 if not pd.isna(Dimension_Index_List):
                     error_flag = True
-                    error_msg += "Expected N/A for Dimension_Index_List. Got:" + str(Dimension_Index_List) + '\n'
+                    error_msg += "# Expected N/A for Dimension_Index_List. Got:" + str(Dimension_Index_List) + '\n'
 
                 if not pd.isna(lower_bound):
                     error_flag = True
-                    error_msg += "Expected N/A for Lower_Bound. Got:" + str(lower_bound) + '\n'
+                    error_msg += "# Expected N/A for Lower_Bound. Got:" + str(lower_bound) + '\n'
 
 
                 if not pd.isna(upper_bound):
                     error_flag = True
-                    error_msg += "Expected N/A for upper_bound. Got:" + str(upper_bound) + '\n'
+                    error_msg += "# Expected N/A for upper_bound. Got:" + str(upper_bound) + '\n'
 
 
-                #Parameters that should be defined
+                # Parameters that should be defined
                 if pd.isna(Element):
                     error_flag = True
-                    error_msg += "Expected not N/A for Element, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Element, but got N/A.\n"
                 elif constraint_type.lower().strip() == 'absolute column data type':
                     try:
                         assert Element in ['bool','int','float','complex','object']
                     except:
                         error_flag = True
-                        error_msg += "Input data type was not one of: bool, int, float, complex, object. Offending value:"+str(Element)+"\n"
+                        error_msg += "# Input data type was not one of: bool, int, float, complex, object. Offending value:"+str(Element)+"\n"
                     # assert maps to one of these data types
                     # Data type	Description
                     # bool_	Boolean (True or False) stored as a byte
@@ -574,108 +592,108 @@ class ConstraintSet:
 
                 if pd.isna(Measure_Index):
                     error_flag = True
-                    error_msg += "Expected not N/A for Measure_Index, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Measure_Index, but got N/A.\n"
 
 
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
-                    error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Warn_or_Fail, but got N/A.\n"
 
 
             elif constraint_type.lower().strip() == 'relative layout' \
                     or constraint_type.lower().strip() == 'relative header':
-                #Parameters that should not be defined
+                # Parameters that should not be defined
                 if not pd.isna(Dimension_Index_List):
                     error_flag = True
-                    error_msg += "Expected N/A for Dimension_Index_List. Got:"+str(Dimension_Index_List)+'\n'
+                    error_msg += "# Expected N/A for Dimension_Index_List. Got:"+str(Dimension_Index_List)+'\n'
 
                 if not pd.isna(Element):
                     error_flag = True
-                    error_msg += "Expected N/A for Element. Got:" + str(Element) + '\n'
+                    error_msg += "# Expected N/A for Element. Got:" + str(Element) + '\n'
 
                 if not pd.isna(Measure_Index):
                     error_flag = True
-                    error_msg += "Expected N/A for Measure_Index. Got:" + str(Measure_Index) + '\n'
+                    error_msg += "# Expected N/A for Measure_Index. Got:" + str(Measure_Index) + '\n'
 
                 if not pd.isna(lower_bound):
                     error_flag = True
-                    error_msg += "Expected N/A for Lower_Bound. Got:" + str(lower_bound) + '\n'
+                    error_msg += "# Expected N/A for Lower_Bound. Got:" + str(lower_bound) + '\n'
 
 
                 if not pd.isna(upper_bound):
                     error_flag = True
-                    error_msg += "Expected N/A for Upper_Bound. Got:" + str(upper_bound) + '\n'
+                    error_msg += "# Expected N/A for Upper_Bound. Got:" + str(upper_bound) + '\n'
 
 
-                # Parameters that should be defined
+                #  Parameters that should be defined
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
-                    error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Warn_or_Fail, but got N/A.\n"
 
 
             elif constraint_type.lower().strip() == 'relative column data type' \
                     or constraint_type.lower().strip() == 'relative column name':
-                #Parameters that should not be defined
+                # Parameters that should not be defined
                 if not pd.isna(Dimension_Index_List):
                     error_flag = True
-                    error_msg += "Expected N/A for Dimension_Index_List. Got:"+str(Dimension_Index_List)+'\n'
+                    error_msg += "# Expected N/A for Dimension_Index_List. Got:"+str(Dimension_Index_List)+'\n'
 
                 if not pd.isna(Element):
                     error_flag = True
-                    error_msg += "Expected N/A for Element. Got:" + str(Element) + '\n'
+                    error_msg += "# Expected N/A for Element. Got:" + str(Element) + '\n'
 
                 if not pd.isna(lower_bound):
                     error_flag = True
-                    error_msg += "Expected N/A for Lower_Bound. Got:" + str(lower_bound) + '\n'
+                    error_msg += "# Expected N/A for Lower_Bound. Got:" + str(lower_bound) + '\n'
 
                 if not pd.isna(upper_bound):
                     error_flag = True
-                    error_msg += "Expected N/A for Upper_Bound. Got:" + str(upper_bound) + '\n'
+                    error_msg += "# Expected N/A for Upper_Bound. Got:" + str(upper_bound) + '\n'
 
 
-                # Parameters that shoudl be defined
+                #  Parameters that shoudl be defined
                 if pd.isna(Measure_Index):
                     error_flag = True
-                    error_msg += "Expected not N/A for Measure_Index, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Measure_Index, but got N/A.\n"
 
 
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
-                    error_msg += "Expected not N/A for Warn_or_Fail, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Warn_or_Fail, but got N/A.\n"
 
 
             elif constraint_type.lower().strip() == 'bounded overlap':
-                #Parameters that should not be defined
+                # Parameters that should not be defined
                 if not pd.isna(Dimension_Index_List):
                     error_flag = True
-                    error_msg += "Expected N/A for Dimension_Index_List. Got:"+str(Dimension_Index_List)+'\n'
+                    error_msg += "# Expected N/A for Dimension_Index_List. Got:"+str(Dimension_Index_List)+'\n'
 
                 if not pd.isna(Element):
                     error_flag = True
-                    error_msg += "Expected N/A for Element. Got:" + str(Element) + '\n'
+                    error_msg += "# Expected N/A for Element. Got:" + str(Element) + '\n'
 
-                # Parameters that should be defined
+                #  Parameters that should be defined
                 if pd.isna(Measure_Index):
                     error_flag = True
-                    error_msg += "Expected not N/A for Measure_Index, but got N/A.\n"
+                    error_msg += "# Expected not N/A for Measure_Index, but got N/A.\n"
 
 
                 if pd.isna(lower_bound):
                     error_flag = True
-                    error_msg += "Expected not N/A for lower_bound, but got N/A.\n"
+                    error_msg += "# Expected not N/A for lower_bound, but got N/A.\n"
 
 
                 if pd.isna(upper_bound):
                     error_flag = True
-                    error_msg += "Expected not N/A for upper_bound, but got N/A.\n"
+                    error_msg += "# Expected not N/A for upper_bound, but got N/A.\n"
 
 
                 if pd.isna(Warn_or_Fail):
                     error_flag = True
-                    error_msg += "Expected not N/A for lower_bound, but got N/A.\n"
+                    error_msg += "# Expected not N/A for lower_bound, but got N/A.\n"
 
             else:
-                error_msg = "Unknown constraint type"
+                error_msg = "# Unknown constraint type"
 
             if error_flag:
                 raise ValueError
